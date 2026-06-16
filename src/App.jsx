@@ -4,7 +4,6 @@ import SupplierDashboard from "./SupplierDashboard";
 import { Icon, Badge, StatCard } from "./components/UI";
 import productService from "./services/productService";
 import authService from "./services/authService";
-import productService from "./services/productService";
 import inventoryService from "./services/inventoryService";
 
 // ─── Icons glyphs ───────────────────────────────────────────────────────────
@@ -26,11 +25,13 @@ const icons = {
   sort: "M3 6h18M7 12h10M11 18h2",
   download: "M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 0-2-2v-4M7 10l5 5 5-5M12 15V3",
   refresh: "M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15",
-  print: "M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M6 14h12v8H6z",
+  print: "M6 9V2h12v7M6 14v6h12v-6M8 16h8",
+  share: "M4 12v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7M16 6l-4-4-4 4M12 2v10",
   chevronLeft: "M15 18l-6-6 6-6",
   chevronRight: "M9 18l6-6-6-6",
   moreV: "M12 5v.01M12 12v.01M12 19v.01",
   check: "M20 6L9 17l-5-5",
+  hamburger: "M4 7h16M4 12h16M4 17h16",
   alert: "M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0zM12 9v4M12 17h.01",
   google: "M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z",
   sso: "M4 4h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z M7 9h10 M7 13h6",
@@ -48,180 +49,43 @@ const ActionButton = ({ label, icon, variant = "secondary", onClick }) => {
         borderRadius: 8,
         border: isPrimary ? "none" : "1px solid #e5e7eb",
         background: isPrimary ? "linear-gradient(135deg, #2563eb 0%, #7c3aed 100%)" : "#fff",
-        const ProductsPage = () => {
-          const [products, setProducts] = useState([]);
-          const [loading, setLoading] = useState(false);
-          const [error, setError] = useState(null);
-
-          const load = async () => {
-            setError(null);
-            setLoading(true);
-            try {
-              const res = await productService.list();
-              setProducts(res);
-            } catch (err) {
-              setError(err.message || "Failed to load products");
-            } finally {
-              setLoading(false);
-            }
-          };
-
-          useEffect(() => {
-            load();
-          }, []);
-
-          const handleAdd = async () => {
-            const name = prompt("Product name:", "New Product");
-            if (!name) return;
-            const sku = prompt("SKU:", `IP-${Math.floor(Math.random()*9000)+1000}`) || undefined;
-            const price = parseFloat(prompt("Price:", "0") || "0");
-            const qty = parseInt(prompt("Quantity:", "0") || "0", 10);
-            try {
-              await productService.create({ sku, name, category: "Uncategorized", price, quantity: qty, status: qty === 0 ? "out_of_stock" : qty < 20 ? "low_stock" : "in_stock" });
-              await load();
-              alert("Product created");
-            } catch (err) {
-              alert(err.message || "Failed to create product");
-            }
-          };
-
-          const handleEdit = async (p) => {
-            const name = prompt("Name:", p.name) || p.name;
-            const price = parseFloat(prompt("Price:", String(p.price)) || String(p.price));
-            const qty = parseInt(prompt("Quantity:", String(p.quantity || 0)) || String(p.quantity || 0), 10);
-            try {
-              await productService.update(p.id, { name, price, quantity: qty });
-              await load();
-              alert("Product updated");
-            } catch (err) {
-              alert(err.message || "Update failed");
-            }
-          };
-
-          const handleDelete = async (p) => {
-            if (!confirm(`Delete product ${p.name}?`)) return;
-            try {
-              await productService.remove(p.id);
-              await load();
-              alert("Product deleted");
-            } catch (err) {
-              alert(err.message || "Delete failed");
-            }
-          };
-
-          return (
-            <div style={{ flex: 1, overflowY: "auto", padding: "20px 24px", background: "#f9fafb" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 20 }}>
-                <div>
-                  <h1 style={{ margin: 0, fontSize: 26, fontWeight: 900, color: "#111827" }}>Product Management</h1>
-                  <p style={{ margin: "6px 0 0", color: "#6b7280", fontSize: 13 }}>Manage and track your complete inventory in real-time</p>
-                </div>
-                <div style={{ display: "flex", gap: 8 }}>
-                  <button onClick={handleAdd} style={{ padding: "10px 14px", borderRadius: 10, border: "1px solid #e5e7eb", background: "#fff", cursor: "pointer", fontWeight: 700 }}>Add Product</button>
-                </div>
-              </div>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 14, marginBottom: 20 }}>
-                <div style={{ background: "linear-gradient(135deg, #fff 0%, #f9fafb 100%)", border: "1px solid #e5e7eb", borderRadius: 12, padding: "16px 18px" }}>
-                  <div style={{ fontSize: 12, color: "#9ca3af", fontWeight: 600, letterSpacing: 0.5, textTransform: "uppercase", marginBottom: 6 }}>Total Products</div>
-                  <div style={{ fontSize: 24, fontWeight: 800, color: "#111827" }}>{products.length}</div>
-                </div>
-                <div style={{ background: "linear-gradient(135deg, #fff 0%, #f9fafb 100%)", border: "1px solid #e5e7eb", borderRadius: 12, padding: "16px 18px" }}>
-                  <div style={{ fontSize: 12, color: "#9ca3af", fontWeight: 600, letterSpacing: 0.5, textTransform: "uppercase", marginBottom: 6 }}>Low Stock Items</div>
-                  <div style={{ fontSize: 24, fontWeight: 800, color: "#ef4444" }}>{products.filter(p => (p.quantity || 0) > 0 && p.quantity < 20).length}</div>
-                </div>
-                <div style={{ background: "linear-gradient(135deg, #fff 0%, #f9fafb 100%)", border: "1px solid #e5e7eb", borderRadius: 12, padding: "16px 18px" }}>
-                  <div style={{ fontSize: 12, color: "#9ca3af", fontWeight: 600, letterSpacing: 0.5, textTransform: "uppercase", marginBottom: 6 }}>Total Value</div>
-                  <div style={{ fontSize: 24, fontWeight: 800, color: "#111827" }}>${products.reduce((s,p) => s + (p.price||0)*(p.quantity||0),0).toFixed(2)}</div>
-                </div>
-                <div style={{ background: "linear-gradient(135deg, #fff 0%, #f9fafb 100%)", border: "1px solid #e5e7eb", borderRadius: 12, padding: "16px 18px" }}>
-                  <div style={{ fontSize: 12, color: "#9ca3af", fontWeight: 600, letterSpacing: 0.5, textTransform: "uppercase", marginBottom: 6 }}>Out of Stock</div>
-                  <div style={{ fontSize: 24, fontWeight: 800, color: "#111827" }}>{products.filter(p => (p.quantity||0)===0).length}</div>
-                </div>
-              </div>
-              <div style={{ background: "#fff", borderRadius: 12, border: "1px solid #e5e7eb", overflow: "hidden", boxShadow: "0 1px 3px rgba(0, 0, 0, 0.05)" }}>
-                <div style={{ padding: 20, display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid #e5e7eb" }}>
-                  <h2 style={{ margin: 0, fontSize: 16, fontWeight: 800, color: "#111827" }}>Inventory</h2>
-                  <div style={{ fontSize: 12, color: "#9ca3af" }}>{loading ? "Loading..." : `Showing ${products.length} products`}</div>
-                </div>
-                <div style={{ overflowX: "auto" }}>
-                  <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
-                    <thead>
-                      <tr style={{ borderBottom: "2px solid #e5e7eb", background: "#f9fafb" }}>
-                        {["SKU", "Product Name", "Category", "Price", "Stock Level", "Actions"].map(h => (
-                          <th key={h} style={{ textAlign: "left", padding: "12px 16px", fontSize: 11, fontWeight: 700, color: "#9ca3af", letterSpacing: 0.5, textTransform: "uppercase" }}>{h}</th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {products.map((p, idx) => (
-                        <tr key={p.id} style={{ borderBottom: "1px solid #e5e7eb", transition: "all 0.2s ease", background: idx % 2 === 0 ? "#f9fafb" : "#fff" }} onMouseEnter={(e) => { e.currentTarget.style.background = "#f3f4f6"; }} onMouseLeave={(e) => { e.currentTarget.style.background = idx % 2 === 0 ? "#f9fafb" : "#fff"; }}>
-                          <td style={{ padding: "14px 16px", fontWeight: 700, color: "#2563eb", fontSize: 12 }}>{p.sku}</td>
-                          <td style={{ padding: "14px 16px" }}>
-                            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                              <div style={{ width: 36, height: 36, background: "linear-gradient(135deg, #e0e7ff 0%, #c7d7fd 100%)", borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", color: "#2563eb", fontWeight: 600, fontSize: 12 }}>
-                                {p.sku ? p.sku.slice(0, 1) : "#"}
-                              </div>
-                              <div>
-                                <div style={{ fontWeight: 600, color: "#111827" }}>{p.name}</div>
-                                <div style={{ fontSize: 12, color: "#9ca3af" }}>{p.category}</div>
-                              </div>
-                            </div>
-                          </td>
-                          <td style={{ padding: "14px 16px", color: "#6b7280" }}>{p.category}</td>
-                          <td style={{ padding: "14px 16px", fontWeight: 700, color: "#111827" }}>${(p.price||0).toFixed(2)}</td>
-                          <td style={{ padding: "14px 16px" }}>
-                            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                              <div style={{ width: 40, height: 6, background: "#e5e7eb", borderRadius: 3, overflow: "hidden" }}>
-                                <div style={{ height: "100%", background: p.quantity === 0 ? "#ef4444" : p.quantity < 20 ? "#f59e0b" : "#2563eb", width: `${Math.min(100, (p.quantity||0))}%`, borderRadius: 3, transition: "width 0.3s ease" }} />
-                              </div>
-                              <Badge color={p.quantity === 0 ? "red" : p.quantity < 20 ? "yellow" : "green"}>{p.quantity === 0 ? "OUT OF STOCK" : p.quantity < 20 ? "LOW STOCK" : "IN STOCK"}</Badge>
-                            </div>
-                          </td>
-                          <td style={{ padding: "14px 16px" }}>
-                            <div style={{ display: "flex", gap: 8 }}>
-                              <button onClick={() => handleEdit(p)} style={{ padding: "6px 12px", border: "1px solid #e5e7eb", borderRadius: 6, background: "#fff", cursor: "pointer", fontSize: 12, fontWeight: 600, color: "#2563eb", transition: "all 0.2s ease" }} onMouseEnter={(e) => { e.currentTarget.style.background = "#eff6ff"; }} onMouseLeave={(e) => { e.currentTarget.style.background = "#fff"; }}>Edit</button>
-                              <button onClick={() => handleDelete(p)} style={{ padding: "6px 12px", border: "1px solid #fde2e2", borderRadius: 6, background: "#fff", cursor: "pointer", fontSize: 12, fontWeight: 600, color: "#ef4444" }}>Delete</button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-                <div style={{ padding: "14px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", borderTop: "1px solid #e5e7eb", background: "#f9fafb" }}>
-                  <span style={{ fontSize: 12, color: "#6b7280" }}>Page 1</span>
-                  <div style={{ display: "flex", gap: 4 }}>
-                    {[icons.chevronLeft, "1", "2", "3", icons.chevronRight].map((item, i) => (
-                      <button key={i} style={{ width: 32, height: 32, border: "1px solid #e5e7eb", borderRadius: 6, background: i === 1 ? "#2563eb" : "#fff", color: i === 1 ? "#fff" : "#6b7280", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 600, fontSize: 13, transition: "all 0.2s ease" }} onMouseEnter={(e) => { if (i !== 1) { e.currentTarget.style.borderColor = "#d1d5db"; } }} onMouseLeave={(e) => { e.currentTarget.style.borderColor = "#e5e7eb"; }}>
-                        {renderPaginationItem(item, i)}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-          );
-        };
-          <div style={{ width: 36, height: 36, borderRadius: "50%", background: "linear-gradient(135deg, #2563eb 0%, #7c3aed 100%)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 13, fontWeight: 700, flexShrink: 0 }}>IP</div>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 12, fontWeight: 700, color: "#111827" }}>Inventory Pro</div>
-            <div style={{ fontSize: 10, color: "#9ca3af" }}>{roleSubtitle}</div>
-          </div>
-        </div>
-      </div>
-    </aside>
+      }}
+    >
+      {icon}
+      {label}
+    </button>
   );
 };
 
-const TopBar = ({ title, actions = [] }) => (
+const TopBar = ({ title, actions = [], onToggleSidebar, isSidebarOpen }) => (
   <header style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, padding: "14px 24px", borderBottom: "1px solid #e5e7eb", background: "#fff", flexShrink: 0, boxShadow: "0 1px 3px rgba(0, 0, 0, 0.05)" }}>
-    <span style={{ fontWeight: 800, color: "#111827", fontSize: 14 }}>{title || "Inventory Pro"}</span>
+    <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+      <button
+        onClick={onToggleSidebar}
+        style={{
+          width: 44,
+          height: 44,
+          borderRadius: 12,
+          border: "none",
+          background: "#eff6ff",
+          color: "#2563eb",
+          cursor: "pointer",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          boxShadow: "0 10px 18px rgba(37, 99, 235, 0.12)"
+        }}
+      >
+        <Icon d={isSidebarOpen ? icons.chevronLeft : icons.hamburger} size={18} />
+      </button>
+      <span style={{ fontWeight: 800, color: "#111827", fontSize: 14 }}>{title || "Inventory Pro"}</span>
+    </div>
     <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
       {actions.map((action, index) => (
         <ActionButton key={index} label={action.label} icon={action.icon} variant={action.variant || "secondary"} onClick={action.onClick} />
       ))}
-      <ActionButton label="Export" icon={<Icon d={icons.download} size={14} />} variant="secondary" onClick={() => console.log("Export action")}/>
-      <ActionButton label="Refresh" icon={<Icon d={icons.refresh} size={14} stroke="#fff" />} variant="primary" onClick={() => console.log("Refresh action")}/>
+      <ActionButton label="Export" icon={<Icon d={icons.download} size={14} />} variant="secondary" onClick={() => console.log("Export action")} />
+      <ActionButton label="Refresh" icon={<Icon d={icons.refresh} size={14} stroke="#fff" />} variant="primary" onClick={() => console.log("Refresh action")} />
     </div>
   </header>
 );
@@ -464,7 +328,7 @@ const ProductsPage = () => {
   useEffect(() => { load(); }, []);
 
   const handleDelete = async (id) => {
-    if (!confirm("Delete this product?")) return;
+    if (!window.confirm("Delete this product?")) return;
     try {
       await productService.remove(id);
       await load();
@@ -949,6 +813,113 @@ const ProfilePage = ({ role }) => (
   </div>
 );
 
+const Sidebar = ({ active, setPage, onLogout, role, isOpen, onToggle }) => {
+  const navItems = [
+    { key: "dashboard", label: "Dashboard", icon: icons.grid, roles: ["admin", "customer", "supplier"] },
+    { key: "customer", label: "Customer Portal", icon: icons.user, roles: ["customer"] },
+    { key: "supplier", label: "Supplier Portal", icon: icons.truck, roles: ["supplier"] },
+    { key: "products", label: "Products", icon: icons.box, roles: ["admin", "customer"] },
+    { key: "suppliers", label: "Suppliers", icon: icons.search, roles: ["admin"] },
+    { key: "sales", label: "Sales", icon: icons.receipt, roles: ["admin"] },
+    { key: "reports", label: "Reports", icon: icons.print, roles: ["admin"] },
+    { key: "purchase_history", label: "Purchase History", icon: icons.receipt, roles: ["customer"] },
+    { key: "recent_purchases", label: "Recent Purchases", icon: icons.check, roles: ["customer"] },
+    { key: "supplied_products", label: "Supplied Products", icon: icons.box, roles: ["supplier"] },
+    { key: "restock_requests", label: "Restock Requests", icon: icons.alert, roles: ["supplier"] },
+    { key: "supply_history", label: "Supply History", icon: icons.chart, roles: ["supplier"] },
+    { key: "profile", label: "Profile", icon: icons.user, roles: ["admin", "customer", "supplier"] },
+  ];
+
+  return (
+    <aside style={{ width: isOpen ? 280 : 76, minWidth: isOpen ? 280 : 76, overflow: "hidden", background: "#fff", color: "#111827", display: "flex", flexDirection: "column", boxShadow: "0 20px 60px rgba(15, 23, 42, 0.08)", borderRadius: 28, transition: "width 240ms ease", border: "1px solid rgba(226, 232, 240, 0.9)" }}>
+      <div style={{ background: "linear-gradient(135deg, #2563eb 0%, #3b82f6 100%)", padding: isOpen ? "28px 20px 20px" : "22px 0 18px", color: "#fff", display: "flex", alignItems: "center", justifyContent: isOpen ? "space-between" : "center", borderTopLeftRadius: 28, borderTopRightRadius: isOpen ? 0 : 28 }}>
+        {isOpen && (
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <div style={{ width: 40, height: 40, borderRadius: 14, background: "rgba(255,255,255,0.18)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <Icon d={icons.grid} size={18} stroke="#fff" />
+            </div>
+            <div>
+              <div style={{ fontSize: 20, fontWeight: 800, lineHeight: 1 }}>{"Inventory"}</div>
+              <div style={{ color: "rgba(255,255,255,0.85)", fontSize: 12, marginTop: 4 }}>{role ? role.charAt(0).toUpperCase() + role.slice(1) : "Guest"}</div>
+            </div>
+          </div>
+        )}
+        <button
+          onClick={onToggle}
+          style={{
+            width: 36,
+            height: 36,
+            borderRadius: 12,
+            border: "none",
+            background: "rgba(255,255,255,0.18)",
+            color: "#fff",
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center"
+          }}
+          aria-label={isOpen ? "Collapse sidebar" : "Open sidebar"}
+        >
+          <Icon d={isOpen ? icons.chevronLeft : icons.hamburger} size={18} />
+        </button>
+      </div>
+      <div style={{ padding: "20px", display: "flex", flexDirection: "column", gap: 10, background: "#fff", flex: 1 }}>
+        {navItems.filter(item => item.roles.includes(role)).map(item => (
+          <button
+            key={item.key}
+            onClick={() => setPage(item.key)}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: isOpen ? "flex-start" : "center",
+              gap: isOpen ? 10 : 0,
+              width: "100%",
+              padding: "14px 16px",
+              borderRadius: 16,
+              border: "none",
+              background: active === item.key ? "#eff6ff" : "transparent",
+              color: active === item.key ? "#111827" : "#475569",
+              textAlign: "left",
+              cursor: "pointer",
+              fontWeight: 700,
+              boxShadow: active === item.key ? "inset 0 0 0 1px rgba(15, 23, 42, 0.08)" : "none",
+            }}
+          >
+            <span style={{ width: 32, height: 32, borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center", background: active === item.key ? "#c7d2fe" : "#eff6ff" }}>
+              <Icon d={item.icon} size={16} stroke={active === item.key ? "#1d4ed8" : "#2563eb"} />
+            </span>
+            <span style={{ display: isOpen ? "inline" : "none", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+              {item.label}
+            </span>
+          </button>
+        ))}
+      </div>
+      <div style={{ padding: "20px", borderTop: "1px solid #e2e8f0", background: "#fff" }}>
+        <button
+          onClick={onLogout}
+          style={{
+            width: "100%",
+            padding: isOpen ? "12px 14px" : "12px 0",
+            borderRadius: 12,
+            border: "1px solid #d1d5db",
+            background: "#f8fafc",
+            color: "#1f2937",
+            cursor: "pointer",
+            fontWeight: 700,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: isOpen ? 8 : 0,
+          }}
+        >
+          <Icon d={icons.lock} size={16} />
+          {isOpen && "Logout"}
+        </button>
+      </div>
+    </aside>
+  );
+};
+
 // removed inline customer and supplier dashboards - now in separate files
 
 // ─── App ──────────────────────────────────────────────────────────────────────
@@ -956,6 +927,7 @@ export default function App() {
   const [page, setPage] = useState("login");
   const [role, setRole] = useState(null);
   const [rememberSession, setRememberSession] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
 
   const allowedPages = {
     admin: ["dashboard", "products", "suppliers", "sales", "reports", "profile"],
@@ -1061,6 +1033,7 @@ export default function App() {
     ],
     reports: [
       { label: "Last 30 Days", onClick: () => console.log("Last 30 Days") },
+      { label: "Share", icon: <Icon d={icons.share} size={14} />, onClick: () => console.log("Share") },
       { label: "Print", icon: <Icon d={icons.print} size={14} />, onClick: () => console.log("Print") },
     ],
   };
@@ -1079,10 +1052,10 @@ export default function App() {
   const currentActions = pageActions[page] || [];
 
   return (
-    <div style={{ fontFamily: "'Inter', 'Segoe UI', system-ui, sans-serif", display: "flex", height: "100vh", overflow: "hidden", background: "#f9fafb" }}>
-      <Sidebar active={page} setPage={setPageAuthorized} onLogout={handleLogout} role={role} />
-      <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
-        <TopBar title={currentTitle} actions={currentActions} />
+    <div style={{ fontFamily: "'Inter', 'Segoe UI', system-ui, sans-serif", display: "flex", height: "100vh", overflow: "hidden", background: "#eff3ff", padding: 18, boxSizing: "border-box" }}>
+      <Sidebar active={page} setPage={setPageAuthorized} onLogout={handleLogout} role={role} isOpen={sidebarOpen} onToggle={() => setSidebarOpen(open => !open)} />
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", marginLeft: 16, borderRadius: 28, background: "#ffffff", boxShadow: "0 22px 60px rgba(15, 23, 42, 0.07)" }}>
+        <TopBar title={currentTitle} actions={currentActions} onToggleSidebar={() => setSidebarOpen(open => !open)} isSidebarOpen={sidebarOpen} />
         {page === "dashboard" && <DashboardPage />}
         {page === "customer" && <CustomerDashboard />}
         {page === "supplier" && <SupplierDashboard />}
