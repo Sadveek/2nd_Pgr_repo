@@ -4,7 +4,6 @@ import SupplierDashboard from "./SupplierDashboard";
 import { Icon, Badge, StatCard } from "./components/UI";
 import productService from "./services/productService";
 import authService from "./services/authService";
-import productService from "./services/productService";
 import inventoryService from "./services/inventoryService";
 
 // ─── Icons glyphs ───────────────────────────────────────────────────────────
@@ -48,168 +47,17 @@ const ActionButton = ({ label, icon, variant = "secondary", onClick }) => {
         borderRadius: 8,
         border: isPrimary ? "none" : "1px solid #e5e7eb",
         background: isPrimary ? "linear-gradient(135deg, #2563eb 0%, #7c3aed 100%)" : "#fff",
-        const ProductsPage = () => {
-          const [products, setProducts] = useState([]);
-          const [loading, setLoading] = useState(false);
-          const [error, setError] = useState(null);
-
-          const load = async () => {
-            setError(null);
-            setLoading(true);
-            try {
-              const res = await productService.list();
-              setProducts(res);
-            } catch (err) {
-              setError(err.message || "Failed to load products");
-            } finally {
-              setLoading(false);
-            }
-          };
-
-          useEffect(() => {
-            load();
-          }, []);
-
-          const handleAdd = async () => {
-            const name = prompt("Product name:", "New Product");
-            if (!name) return;
-            const sku = prompt("SKU:", `IP-${Math.floor(Math.random()*9000)+1000}`) || undefined;
-            const price = parseFloat(prompt("Price:", "0") || "0");
-            const qty = parseInt(prompt("Quantity:", "0") || "0", 10);
-            try {
-              await productService.create({ sku, name, category: "Uncategorized", price, quantity: qty, status: qty === 0 ? "out_of_stock" : qty < 20 ? "low_stock" : "in_stock" });
-              await load();
-              alert("Product created");
-            } catch (err) {
-              alert(err.message || "Failed to create product");
-            }
-          };
-
-          const handleEdit = async (p) => {
-            const name = prompt("Name:", p.name) || p.name;
-            const price = parseFloat(prompt("Price:", String(p.price)) || String(p.price));
-            const qty = parseInt(prompt("Quantity:", String(p.quantity || 0)) || String(p.quantity || 0), 10);
-            try {
-              await productService.update(p.id, { name, price, quantity: qty });
-              await load();
-              alert("Product updated");
-            } catch (err) {
-              alert(err.message || "Update failed");
-            }
-          };
-
-          const handleDelete = async (p) => {
-            if (!confirm(`Delete product ${p.name}?`)) return;
-            try {
-              await productService.remove(p.id);
-              await load();
-              alert("Product deleted");
-            } catch (err) {
-              alert(err.message || "Delete failed");
-            }
-          };
-
-          return (
-            <div style={{ flex: 1, overflowY: "auto", padding: "20px 24px", background: "#f9fafb" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 20 }}>
-                <div>
-                  <h1 style={{ margin: 0, fontSize: 26, fontWeight: 900, color: "#111827" }}>Product Management</h1>
-                  <p style={{ margin: "6px 0 0", color: "#6b7280", fontSize: 13 }}>Manage and track your complete inventory in real-time</p>
-                </div>
-                <div style={{ display: "flex", gap: 8 }}>
-                  <button onClick={handleAdd} style={{ padding: "10px 14px", borderRadius: 10, border: "1px solid #e5e7eb", background: "#fff", cursor: "pointer", fontWeight: 700 }}>Add Product</button>
-                </div>
-              </div>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 14, marginBottom: 20 }}>
-                <div style={{ background: "linear-gradient(135deg, #fff 0%, #f9fafb 100%)", border: "1px solid #e5e7eb", borderRadius: 12, padding: "16px 18px" }}>
-                  <div style={{ fontSize: 12, color: "#9ca3af", fontWeight: 600, letterSpacing: 0.5, textTransform: "uppercase", marginBottom: 6 }}>Total Products</div>
-                  <div style={{ fontSize: 24, fontWeight: 800, color: "#111827" }}>{products.length}</div>
-                </div>
-                <div style={{ background: "linear-gradient(135deg, #fff 0%, #f9fafb 100%)", border: "1px solid #e5e7eb", borderRadius: 12, padding: "16px 18px" }}>
-                  <div style={{ fontSize: 12, color: "#9ca3af", fontWeight: 600, letterSpacing: 0.5, textTransform: "uppercase", marginBottom: 6 }}>Low Stock Items</div>
-                  <div style={{ fontSize: 24, fontWeight: 800, color: "#ef4444" }}>{products.filter(p => (p.quantity || 0) > 0 && p.quantity < 20).length}</div>
-                </div>
-                <div style={{ background: "linear-gradient(135deg, #fff 0%, #f9fafb 100%)", border: "1px solid #e5e7eb", borderRadius: 12, padding: "16px 18px" }}>
-                  <div style={{ fontSize: 12, color: "#9ca3af", fontWeight: 600, letterSpacing: 0.5, textTransform: "uppercase", marginBottom: 6 }}>Total Value</div>
-                  <div style={{ fontSize: 24, fontWeight: 800, color: "#111827" }}>${products.reduce((s,p) => s + (p.price||0)*(p.quantity||0),0).toFixed(2)}</div>
-                </div>
-                <div style={{ background: "linear-gradient(135deg, #fff 0%, #f9fafb 100%)", border: "1px solid #e5e7eb", borderRadius: 12, padding: "16px 18px" }}>
-                  <div style={{ fontSize: 12, color: "#9ca3af", fontWeight: 600, letterSpacing: 0.5, textTransform: "uppercase", marginBottom: 6 }}>Out of Stock</div>
-                  <div style={{ fontSize: 24, fontWeight: 800, color: "#111827" }}>{products.filter(p => (p.quantity||0)===0).length}</div>
-                </div>
-              </div>
-              <div style={{ background: "#fff", borderRadius: 12, border: "1px solid #e5e7eb", overflow: "hidden", boxShadow: "0 1px 3px rgba(0, 0, 0, 0.05)" }}>
-                <div style={{ padding: 20, display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid #e5e7eb" }}>
-                  <h2 style={{ margin: 0, fontSize: 16, fontWeight: 800, color: "#111827" }}>Inventory</h2>
-                  <div style={{ fontSize: 12, color: "#9ca3af" }}>{loading ? "Loading..." : `Showing ${products.length} products`}</div>
-                </div>
-                <div style={{ overflowX: "auto" }}>
-                  <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
-                    <thead>
-                      <tr style={{ borderBottom: "2px solid #e5e7eb", background: "#f9fafb" }}>
-                        {["SKU", "Product Name", "Category", "Price", "Stock Level", "Actions"].map(h => (
-                          <th key={h} style={{ textAlign: "left", padding: "12px 16px", fontSize: 11, fontWeight: 700, color: "#9ca3af", letterSpacing: 0.5, textTransform: "uppercase" }}>{h}</th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {products.map((p, idx) => (
-                        <tr key={p.id} style={{ borderBottom: "1px solid #e5e7eb", transition: "all 0.2s ease", background: idx % 2 === 0 ? "#f9fafb" : "#fff" }} onMouseEnter={(e) => { e.currentTarget.style.background = "#f3f4f6"; }} onMouseLeave={(e) => { e.currentTarget.style.background = idx % 2 === 0 ? "#f9fafb" : "#fff"; }}>
-                          <td style={{ padding: "14px 16px", fontWeight: 700, color: "#2563eb", fontSize: 12 }}>{p.sku}</td>
-                          <td style={{ padding: "14px 16px" }}>
-                            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                              <div style={{ width: 36, height: 36, background: "linear-gradient(135deg, #e0e7ff 0%, #c7d7fd 100%)", borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", color: "#2563eb", fontWeight: 600, fontSize: 12 }}>
-                                {p.sku ? p.sku.slice(0, 1) : "#"}
-                              </div>
-                              <div>
-                                <div style={{ fontWeight: 600, color: "#111827" }}>{p.name}</div>
-                                <div style={{ fontSize: 12, color: "#9ca3af" }}>{p.category}</div>
-                              </div>
-                            </div>
-                          </td>
-                          <td style={{ padding: "14px 16px", color: "#6b7280" }}>{p.category}</td>
-                          <td style={{ padding: "14px 16px", fontWeight: 700, color: "#111827" }}>${(p.price||0).toFixed(2)}</td>
-                          <td style={{ padding: "14px 16px" }}>
-                            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                              <div style={{ width: 40, height: 6, background: "#e5e7eb", borderRadius: 3, overflow: "hidden" }}>
-                                <div style={{ height: "100%", background: p.quantity === 0 ? "#ef4444" : p.quantity < 20 ? "#f59e0b" : "#2563eb", width: `${Math.min(100, (p.quantity||0))}%`, borderRadius: 3, transition: "width 0.3s ease" }} />
-                              </div>
-                              <Badge color={p.quantity === 0 ? "red" : p.quantity < 20 ? "yellow" : "green"}>{p.quantity === 0 ? "OUT OF STOCK" : p.quantity < 20 ? "LOW STOCK" : "IN STOCK"}</Badge>
-                            </div>
-                          </td>
-                          <td style={{ padding: "14px 16px" }}>
-                            <div style={{ display: "flex", gap: 8 }}>
-                              <button onClick={() => handleEdit(p)} style={{ padding: "6px 12px", border: "1px solid #e5e7eb", borderRadius: 6, background: "#fff", cursor: "pointer", fontSize: 12, fontWeight: 600, color: "#2563eb", transition: "all 0.2s ease" }} onMouseEnter={(e) => { e.currentTarget.style.background = "#eff6ff"; }} onMouseLeave={(e) => { e.currentTarget.style.background = "#fff"; }}>Edit</button>
-                              <button onClick={() => handleDelete(p)} style={{ padding: "6px 12px", border: "1px solid #fde2e2", borderRadius: 6, background: "#fff", cursor: "pointer", fontSize: 12, fontWeight: 600, color: "#ef4444" }}>Delete</button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-                <div style={{ padding: "14px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", borderTop: "1px solid #e5e7eb", background: "#f9fafb" }}>
-                  <span style={{ fontSize: 12, color: "#6b7280" }}>Page 1</span>
-                  <div style={{ display: "flex", gap: 4 }}>
-                    {[icons.chevronLeft, "1", "2", "3", icons.chevronRight].map((item, i) => (
-                      <button key={i} style={{ width: 32, height: 32, border: "1px solid #e5e7eb", borderRadius: 6, background: i === 1 ? "#2563eb" : "#fff", color: i === 1 ? "#fff" : "#6b7280", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 600, fontSize: 13, transition: "all 0.2s ease" }} onMouseEnter={(e) => { if (i !== 1) { e.currentTarget.style.borderColor = "#d1d5db"; } }} onMouseLeave={(e) => { e.currentTarget.style.borderColor = "#e5e7eb"; }}>
-                        {renderPaginationItem(item, i)}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-          );
-        };
-          <div style={{ width: 36, height: 36, borderRadius: "50%", background: "linear-gradient(135deg, #2563eb 0%, #7c3aed 100%)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 13, fontWeight: 700, flexShrink: 0 }}>IP</div>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 12, fontWeight: 700, color: "#111827" }}>Inventory Pro</div>
-            <div style={{ fontSize: 10, color: "#9ca3af" }}>{roleSubtitle}</div>
-          </div>
-        </div>
-      </div>
-    </aside>
+        color: isPrimary ? "#fff" : "#111827",
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 8,
+        fontWeight: 700,
+        cursor: "pointer",
+      }}
+    >
+      {icon}
+      <span>{label}</span>
+    </button>
   );
 };
 
