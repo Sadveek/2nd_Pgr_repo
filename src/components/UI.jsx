@@ -12,6 +12,9 @@ export const Badge = ({ children, color = "green" }) => {
     yellow: { bg: "#fffbeb", text: "#92400e", border: "#fed7aa", dot: "#f59e0b" },
     red: { bg: "#fef2f2", text: "#7f1d1d", border: "#fecaca", dot: "#ef4444" },
     blue: { bg: "#eff6ff", text: "#0c2340", border: "#bfdbfe", dot: "#3b82f6" },
+    orange: { bg: "#fff7ed", text: "#9a3412", border: "#fed7aa", dot: "#f97316" },
+    purple: { bg: "#f5f3ff", text: "#5b21b6", border: "#ddd6fe", dot: "#8b5cf6" },
+    teal: { bg: "#f0fdfa", text: "#115e59", border: "#99f6e4", dot: "#14b8a6" },
     gray: { bg: "#f3f4f6", text: "#374151", border: "#d1d5db", dot: "#6b7280" },
   };
   const c = colors[color] || colors.gray;
