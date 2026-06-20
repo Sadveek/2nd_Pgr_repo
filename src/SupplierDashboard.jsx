@@ -4,8 +4,8 @@ import {
   Badge,
   StatCard,
   APP_CONTROL_INPUT_STYLE,
-  APP_CONTROL_SELECT_STYLE,
   APP_CONTROL_BUTTON_STYLE,
+  ThemeSelect,
   Pagination,
 } from "./components/UI";
 import dashboardService from "./services/dashboardService";
@@ -389,26 +389,26 @@ const SupplierDashboard = ({ page = "supplier" }) => {
             style={{ ...APP_CONTROL_INPUT_STYLE, paddingLeft: 38 }}
           />
           </div>
-          <select
+          <ThemeSelect
             value={requestPriority}
-            onChange={(event) => setRequestPriority(event.target.value)}
-            style={APP_CONTROL_SELECT_STYLE}
-          >
-            <option value="all">All Priorities</option>
-            <option value="critical">Critical</option>
-            <option value="high">High</option>
-            <option value="medium">Medium</option>
-            <option value="low">Low</option>
-          </select>
-          <select
+            onChange={setRequestPriority}
+            options={[
+              { value: "all", label: "All Priorities" },
+              { value: "critical", label: "Critical" },
+              { value: "high", label: "High" },
+              { value: "medium", label: "Medium" },
+              { value: "low", label: "Low" },
+            ]}
+          />
+          <ThemeSelect
             value={requestStatus}
-            onChange={(event) => setRequestStatus(event.target.value)}
-            style={APP_CONTROL_SELECT_STYLE}
-          >
-            <option value="all">All Status</option>
-            <option value="open">Open Only</option>
-            <option value="completed">Completed</option>
-          </select>
+            onChange={setRequestStatus}
+            options={[
+              { value: "all", label: "All Status" },
+              { value: "open", label: "Open Only" },
+              { value: "completed", label: "Completed" },
+            ]}
+          />
           <button
             type="button"
             onClick={() => {
@@ -517,26 +517,26 @@ const SupplierDashboard = ({ page = "supplier" }) => {
               style={{ ...APP_CONTROL_INPUT_STYLE, paddingLeft: 38 }}
             />
           </div>
-          <select
+          <ThemeSelect
             value={requestPriority}
-            onChange={(event) => setRequestPriority(event.target.value)}
-            style={APP_CONTROL_SELECT_STYLE}
-          >
-            <option value="all">All Priorities</option>
-            <option value="critical">Critical</option>
-            <option value="high">High</option>
-            <option value="medium">Medium</option>
-            <option value="low">Low</option>
-          </select>
-          <select
+            onChange={setRequestPriority}
+            options={[
+              { value: "all", label: "All Priorities" },
+              { value: "critical", label: "Critical" },
+              { value: "high", label: "High" },
+              { value: "medium", label: "Medium" },
+              { value: "low", label: "Low" },
+            ]}
+          />
+          <ThemeSelect
             value={requestStatus}
-            onChange={(event) => setRequestStatus(event.target.value)}
-            style={APP_CONTROL_SELECT_STYLE}
-          >
-            <option value="all">All Status</option>
-            <option value="open">Open Only</option>
-            <option value="completed">Completed</option>
-          </select>
+            onChange={setRequestStatus}
+            options={[
+              { value: "all", label: "All Status" },
+              { value: "open", label: "Open Only" },
+              { value: "completed", label: "Completed" },
+            ]}
+          />
           <button
             type="button"
             onClick={cycleRequestRange}

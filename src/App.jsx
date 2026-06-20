@@ -14,8 +14,8 @@ import {
   APP_ACCENT_GRADIENT,
   APP_ACCENT_SHADOW,
   APP_CONTROL_INPUT_STYLE,
-  APP_CONTROL_SELECT_STYLE,
   APP_CONTROL_BUTTON_STYLE,
+  ThemeSelect,
   Pagination,
 } from "./components/UI";
 
@@ -864,27 +864,24 @@ const ProductsPage = ({ role = "admin" }) => {
               style={{ ...APP_CONTROL_INPUT_STYLE, paddingLeft: 38 }}
             />
           </div>
-          <select
+          <ThemeSelect
             value={categoryFilter}
-            onChange={(event) => setCategoryFilter(event.target.value)}
-            style={APP_CONTROL_SELECT_STYLE}
-          >
-            {categoryOptions.map((category) => (
-              <option key={category} value={category}>
-                {category === "all" ? "All Categories" : category}
-              </option>
-            ))}
-          </select>
-          <select
+            onChange={setCategoryFilter}
+            options={categoryOptions.map((category) => ({
+              value: category,
+              label: category === "all" ? "All Categories" : category,
+            }))}
+          />
+          <ThemeSelect
             value={stockFilter}
-            onChange={(event) => setStockFilter(event.target.value)}
-            style={APP_CONTROL_SELECT_STYLE}
-          >
-            <option value="all">All Stock</option>
-            <option value="in_stock">In Stock</option>
-            <option value="low_stock">Low Stock</option>
-            <option value="out_of_stock">Out of Stock</option>
-          </select>
+            onChange={setStockFilter}
+            options={[
+              { value: "all", label: "All Stock" },
+              { value: "in_stock", label: "In Stock" },
+              { value: "low_stock", label: "Low Stock" },
+              { value: "out_of_stock", label: "Out of Stock" },
+            ]}
+          />
           <button
             type="button"
             onClick={() => {
@@ -1139,11 +1136,15 @@ const ProductsPage = ({ role = "admin" }) => {
                 </div>
                 <div style={{ display: "grid", gap: 6 }}>
                   <label style={{ fontSize: 13, fontWeight: 700, color: "#374151" }}>Priority</label>
-                  <select value={dialogForm.priority || "medium"} onChange={(event) => setDialogForm((current) => ({ ...current, priority: event.target.value }))} style={APP_CONTROL_SELECT_STYLE}>
-                    <option value="low">Low</option>
-                    <option value="medium">Medium</option>
-                    <option value="high">High</option>
-                  </select>
+                  <ThemeSelect
+                    value={dialogForm.priority || "medium"}
+                    onChange={(value) => setDialogForm((current) => ({ ...current, priority: value }))}
+                    options={[
+                      { value: "low", label: "Low" },
+                      { value: "medium", label: "Medium" },
+                      { value: "high", label: "High" },
+                    ]}
+                  />
                 </div>
               </div>
               <div style={{ display: "grid", gap: 6 }}>
@@ -1340,13 +1341,14 @@ const SuppliersPage = () => {
               style={{ ...APP_CONTROL_INPUT_STYLE, paddingLeft: 38 }}
             />
           </div>
-          <select value={categoryFilter} onChange={(event) => setCategoryFilter(event.target.value)} style={APP_CONTROL_SELECT_STYLE}>
-            {supplierCategories.map((category) => (
-              <option key={category} value={category}>
-                {category === "all" ? "All Categories" : category}
-              </option>
-            ))}
-          </select>
+          <ThemeSelect
+            value={categoryFilter}
+            onChange={setCategoryFilter}
+            options={supplierCategories.map((category) => ({
+              value: category,
+              label: category === "all" ? "All Categories" : category,
+            }))}
+          />
           <button
             type="button"
             onClick={() => {
@@ -1599,16 +1601,16 @@ const SalesPage = () => {
               style={{ ...APP_CONTROL_INPUT_STYLE, paddingLeft: 38 }}
             />
           </div>
-          <select
+          <ThemeSelect
             value={statusFilter}
-            onChange={(event) => setStatusFilter(event.target.value)}
-            style={APP_CONTROL_SELECT_STYLE}
-          >
-            <option value="all">All Status</option>
-            <option value="completed">Completed</option>
-            <option value="pending">Pending</option>
-            <option value="refunded">Refunded</option>
-          </select>
+            onChange={setStatusFilter}
+            options={[
+              { value: "all", label: "All Status" },
+              { value: "completed", label: "Completed" },
+              { value: "pending", label: "Pending" },
+              { value: "refunded", label: "Refunded" },
+            ]}
+          />
           <button
             type="button"
             onClick={() => {

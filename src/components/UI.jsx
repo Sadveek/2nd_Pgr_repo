@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useRef, useState } from "react";
 
 export const APP_FONT_STACK = '"Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif';
 export const APP_ACCENT_GRADIENT = "linear-gradient(135deg, #2563eb 0%, #7c3aed 100%)";
@@ -26,11 +26,13 @@ export const APP_CONTROL_SELECT_STYLE = {
   ...APP_CONTROL_INPUT_STYLE,
   cursor: "pointer",
   appearance: "none",
-  backgroundImage: "linear-gradient(45deg, transparent 50%, #94a3b8 50%), linear-gradient(135deg, #94a3b8 50%, transparent 50%)",
-  backgroundPosition: "calc(100% - 18px) calc(1em + 2px), calc(100% - 12px) calc(1em + 2px)",
-  backgroundSize: "6px 6px, 6px 6px",
+  backgroundImage: "linear-gradient(180deg, #ffffff 0%, #f8fbff 100%)",
+  backgroundPosition: "0 0",
+  backgroundSize: "100% 100%",
   backgroundRepeat: "no-repeat",
   paddingRight: 36,
+  boxShadow: "0 1px 3px rgba(15, 23, 42, 0.04)",
+  transition: "border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease",
 };
 export const APP_CONTROL_BUTTON_STYLE = {
   padding: "11px 16px",
@@ -96,6 +98,99 @@ export const StatCard = ({ icon, label, value, sub, subColor = "#10b981", highli
       </div>
       <div style={{ fontSize: 11, color: "#6b7280", fontWeight: 600, letterSpacing: 0.4, textTransform: "uppercase", marginBottom: 6 }}>{label}</div>
       <div style={{ fontSize: 26, fontWeight: 700, color: highlight ? "#991b1b" : "#111827", letterSpacing: -0.6 }}>{value}</div>
+    </div>
+  );
+};
+
+export const ThemeSelect = ({ label, value, onChange, options = [], placeholder = "Select...", disabled = false }) => {
+  const [open, setOpen] = useState(false);
+  const wrapperRef = useRef(null);
+  const selected = options.find((option) => option.value === value);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (wrapperRef.current && !wrapperRef.current.contains(event.target)) {
+        setOpen(false);
+      }
+    };
+    window.addEventListener("mousedown", handleClickOutside);
+    return () => window.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  useEffect(() => {
+    if (disabled) setOpen(false);
+  }, [disabled]);
+
+  return (
+    <div ref={wrapperRef} style={{ display: "grid", gap: 6, position: "relative" }}>
+      {label ? <label style={{ fontSize: 13, fontWeight: 700, color: "#374151" }}>{label}</label> : null}
+      <button
+        type="button"
+        disabled={disabled}
+        onClick={() => setOpen((current) => !current)}
+        style={{
+          ...APP_CONTROL_INPUT_STYLE,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 12,
+          cursor: disabled ? "not-allowed" : "pointer",
+          color: selected ? "#111827" : "#94a3b8",
+          background: disabled ? "linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%)" : "linear-gradient(180deg, #ffffff 0%, #f8fbff 100%)",
+          boxShadow: open ? "0 10px 24px rgba(37, 99, 235, 0.10)" : "0 1px 3px rgba(15, 23, 42, 0.04)",
+          borderColor: open ? "#93c5fd" : "#cbd5e1",
+        }}
+      >
+        <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{selected?.label || placeholder}</span>
+        <span style={{ width: 10, height: 10, borderRight: "2px solid #94a3b8", borderBottom: "2px solid #94a3b8", transform: open ? "translateY(-2px) rotate(225deg)" : "rotate(45deg)", transition: "transform 0.2s ease", flexShrink: 0 }} />
+      </button>
+      {open ? (
+        <div
+          style={{
+            position: "absolute",
+            top: label ? 66 : 46,
+            left: 0,
+            right: 0,
+            zIndex: 30,
+            borderRadius: 16,
+            border: "1px solid #cbd5e1",
+            background: "#fff",
+            boxShadow: "0 18px 40px rgba(15, 23, 42, 0.18)",
+            overflow: "hidden",
+          }}
+        >
+          <div style={{ maxHeight: 260, overflowY: "auto", padding: 6 }}>
+            {options.map((option) => {
+              const isActive = option.value === value;
+              return (
+                <button
+                  key={String(option.value)}
+                  type="button"
+                  onClick={() => {
+                    onChange(option.value);
+                    setOpen(false);
+                  }}
+                  style={{
+                    width: "100%",
+                    textAlign: "left",
+                    padding: "11px 12px",
+                    border: "none",
+                    borderRadius: 12,
+                    background: isActive ? "linear-gradient(135deg, #eff6ff 0%, #ffffff 100%)" : "#fff",
+                    color: isActive ? "#1d4ed8" : "#111827",
+                    cursor: "pointer",
+                    display: "grid",
+                    gap: 3,
+                  }}
+                >
+                  <span style={{ fontSize: 13, fontWeight: 700 }}>{option.label}</span>
+                  {option.description ? <span style={{ fontSize: 11, color: "#6b7280", fontWeight: 500 }}>{option.description}</span> : null}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 };

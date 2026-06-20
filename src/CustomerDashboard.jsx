@@ -4,10 +4,10 @@ import {
   Badge,
   StatCard,
   APP_CONTROL_INPUT_STYLE,
-  APP_CONTROL_SELECT_STYLE,
   APP_CONTROL_BUTTON_STYLE,
   APP_ACCENT_GRADIENT,
   APP_ACCENT_SHADOW,
+  ThemeSelect,
   Pagination,
 } from "./components/UI";
 import dashboardService from "./services/dashboardService";
@@ -445,28 +445,19 @@ const CustomerDashboard = ({ page = "customer", revenueModeEnabled, onToggleReve
               style={{ ...APP_CONTROL_INPUT_STYLE, paddingLeft: 38 }}
             />
           </div>
-          <select
+          <ThemeSelect
             value={catalogCategory}
-            onChange={(event) => setCatalogCategory(event.target.value)}
-            style={APP_CONTROL_SELECT_STYLE}
-          >
-            {catalogCategories.map((category) => (
-              <option key={category} value={category}>
-                {category === "all" ? "All Categories" : category}
-              </option>
-            ))}
-          </select>
-          <select
+            onChange={setCatalogCategory}
+            options={catalogCategories.map((category) => ({
+              value: category,
+              label: category === "all" ? "All Categories" : category,
+            }))}
+          />
+          <ThemeSelect
             value={catalogAvailability}
-            onChange={(event) => setCatalogAvailability(event.target.value)}
-            style={APP_CONTROL_SELECT_STYLE}
-          >
-            {catalogAvailabilityOptions.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
+            onChange={setCatalogAvailability}
+            options={catalogAvailabilityOptions}
+          />
           <button
             type="button"
             onClick={() => {
@@ -603,17 +594,17 @@ const CustomerDashboard = ({ page = "customer", revenueModeEnabled, onToggleReve
           <button type="button" onClick={cycleHistoryRange} style={APP_CONTROL_BUTTON_STYLE}>
             {historyRange === "all" ? "Last 90 Days" : `Last ${historyRange} Days`}
           </button>
-          <select
+          <ThemeSelect
             value={historyStatus}
-            onChange={(event) => setHistoryStatus(event.target.value)}
-            style={APP_CONTROL_SELECT_STYLE}
-          >
-            <option value="all">All Status</option>
-            <option value="delivered">Delivered</option>
-            <option value="shipped">Shipped</option>
-            <option value="processing">Processing</option>
-            <option value="returned">Returned</option>
-          </select>
+            onChange={setHistoryStatus}
+            options={[
+              { value: "all", label: "All Status" },
+              { value: "delivered", label: "Delivered" },
+              { value: "shipped", label: "Shipped" },
+              { value: "processing", label: "Processing" },
+              { value: "returned", label: "Returned" },
+            ]}
+          />
           <button
             type="button"
             onClick={() => {
