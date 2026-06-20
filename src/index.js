@@ -1,17 +1,20 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import './index.css';
 import App from './App';
-import reportWebVitals from './reportWebVitals';
+import { APP_FONT_STACK } from './components/UI';
+
+document.documentElement.style.height = '100%';
+document.documentElement.style.margin = '0';
+document.documentElement.style.overflow = 'hidden';
+document.documentElement.style.fontFamily = APP_FONT_STACK;
+document.documentElement.style.WebkitFontSmoothing = 'antialiased';
+document.documentElement.style.MozOsxFontSmoothing = 'grayscale';
+document.body.style.height = '100%';
+document.body.style.margin = '0';
+document.body.style.overflow = 'hidden';
+document.body.style.fontFamily = APP_FONT_STACK;
+document.body.style.WebkitFontSmoothing = 'antialiased';
+document.body.style.MozOsxFontSmoothing = 'grayscale';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
-root.render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>
-);
-
-// If you want to start measuring performance in your app, pass a function
-// to log results (for example: reportWebVitals(console.log))
-// or send to an analytics endpoint. Learn more: https://bit.ly/CRA-vitals
-reportWebVitals();
+root.render(<App />);
