@@ -17,6 +17,10 @@ const initial = {
     { id: "s_1", companyName: "Acme Electronics", contactName: "Ankit Neupane", email: "ankit@acme.local", phone: "+9779801123456" },
     { id: "s_2", companyName: "Sujal Supplies", contactName: "Sujal", email: "sujal@supplies.local", phone: "+9779814234567" },
     { id: "s_3", companyName: "Govind Hardware", contactName: "Govind", email: "govind@hardware.local", phone: "+9779823345678" },
+    { id: "s_4", companyName: "Nepa Office Mart", contactName: "Ramesh Karki", email: "ramesh@nepaoffice.local", phone: "+9779834456789" },
+    { id: "s_5", companyName: "Himalaya Tech", contactName: "Mina Sharma", email: "mina@himalayatech.local", phone: "+9779845567890" },
+    { id: "s_6", companyName: "Everest Logistics", contactName: "Prabin Gurung", email: "prabin@everestlogistics.local", phone: "+9779856678901" },
+    { id: "s_7", companyName: "Blue Ridge Wholesale", contactName: "Sagar Bista", email: "sagar@blueridge.local", phone: "+9779867789012" },
   ],
   orders: [],
   transactions: [],
@@ -31,10 +35,17 @@ function mergeDefaults(data) {
   const base = cloneInitial();
   const incoming = data && typeof data === "object" ? data : {};
   const mergedUsers = Array.isArray(incoming.users) ? [...incoming.users] : [];
+  const mergedSuppliers = Array.isArray(incoming.suppliers) ? [...incoming.suppliers] : [];
 
   for (const user of base.users) {
     if (!mergedUsers.some((existing) => existing.id === user.id || existing.email === user.email || existing.username === user.username)) {
       mergedUsers.push(user);
+    }
+  }
+
+  for (const supplier of base.suppliers) {
+    if (!mergedSuppliers.some((existing) => existing.id === supplier.id || existing.companyName === supplier.companyName)) {
+      mergedSuppliers.push(supplier);
     }
   }
 
@@ -43,7 +54,7 @@ function mergeDefaults(data) {
     ...incoming,
     users: mergedUsers,
     products: Array.isArray(incoming.products) ? incoming.products : base.products,
-    suppliers: Array.isArray(incoming.suppliers) ? incoming.suppliers : base.suppliers,
+    suppliers: mergedSuppliers,
     orders: Array.isArray(incoming.orders) ? incoming.orders : base.orders,
     transactions: Array.isArray(incoming.transactions) ? incoming.transactions : base.transactions,
     restockRequests: Array.isArray(incoming.restockRequests) ? incoming.restockRequests : base.restockRequests,

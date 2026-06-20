@@ -51,6 +51,7 @@ const icons = {
 };
 
 const ITEMS_PER_PAGE = 100;
+const formatRs = (amount, digits = 2) => `Rs. ${Number(amount || 0).toLocaleString(undefined, { minimumFractionDigits: digits, maximumFractionDigits: digits })}`;
 
 // Shared UI components are imported from ./components/UI
 
@@ -87,6 +88,195 @@ const ActionButton = ({ label, icon, variant = "secondary", onClick }) => {
       {icon}
       <span>{label}</span>
     </button>
+  );
+};
+
+const Modal = ({ open, title, subtitle, children, footer, onClose, width = 560 }) => {
+  useEffect(() => {
+    if (!open) return undefined;
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const handleKeyDown = (event) => {
+      if (event.key === "Escape") onClose?.();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      document.body.style.overflow = originalOverflow;
+    };
+  }, [open, onClose]);
+
+  if (!open) return null;
+
+  return (
+    <div
+      role="presentation"
+      onMouseDown={onClose}
+      style={{
+        position: "fixed",
+        inset: 0,
+        zIndex: 80,
+        background: "rgba(15, 23, 42, 0.5)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: 20,
+      }}
+    >
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label={title}
+        onMouseDown={(event) => event.stopPropagation()}
+        style={{
+          width: "100%",
+          maxWidth: width,
+          maxHeight: "calc(100vh - 40px)",
+          background: "#fff",
+          borderRadius: 18,
+          border: "1px solid rgba(255,255,255,0.4)",
+          boxShadow: "0 30px 80px rgba(15, 23, 42, 0.28)",
+          overflow: "hidden",
+          display: "flex",
+          flexDirection: "column",
+        }}
+      >
+        <div style={{ padding: "18px 20px", borderBottom: "1px solid #e5e7eb", background: "linear-gradient(180deg, #ffffff 0%, #f8fafc 100%)" }}>
+          <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12 }}>
+            <div>
+              <div style={{ fontSize: 18, fontWeight: 800, color: "#111827" }}>{title}</div>
+              {subtitle ? <div style={{ marginTop: 4, fontSize: 13, color: "#6b7280" }}>{subtitle}</div> : null}
+            </div>
+            <button
+              type="button"
+              onClick={onClose}
+              style={{
+                width: 34,
+                height: 34,
+                borderRadius: 10,
+                border: "1px solid #e5e7eb",
+                background: "#fff",
+                cursor: "pointer",
+                color: "#6b7280",
+                fontSize: 18,
+                lineHeight: 1,
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+              aria-label="Close dialog"
+            >
+              ×
+            </button>
+          </div>
+        </div>
+        <div style={{ padding: 20, overflowY: "auto", flex: 1 }}>{children}</div>
+        {footer ? <div style={{ padding: "16px 20px", borderTop: "1px solid #e5e7eb", background: "#f9fafb" }}>{footer}</div> : null}
+      </div>
+    </div>
+  );
+};
+
+const SearchableSelect = ({ label, placeholder = "Search...", value, onChange, options, emptyText = "No matches found", helperText, disabled = false, allowEmptyOption = false, emptyOptionLabel = "No supplier selected" }) => {
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const selected = options.find((option) => option.value === value);
+  const selectableOptions = allowEmptyOption
+    ? [{ value: "", label: emptyOptionLabel, description: "Leave this product unlinked" }, ...options]
+    : options;
+
+  useEffect(() => {
+    if (!open) setQuery("");
+  }, [open]);
+
+  const filtered = selectableOptions.filter((option) => {
+    const searchText = `${option.label || ""} ${option.value || ""} ${option.description || ""}`.toLowerCase();
+    return !query.trim() || searchText.includes(query.trim().toLowerCase());
+  });
+
+  const displayValue = selected ? selected.label : allowEmptyOption ? emptyOptionLabel : placeholder;
+
+  return (
+    <div style={{ display: "grid", gap: 6, position: "relative" }}>
+      {label ? <label style={{ fontSize: 13, fontWeight: 700, color: "#374151" }}>{label}</label> : null}
+      <button
+        type="button"
+        disabled={disabled}
+        onClick={() => setOpen((current) => !current)}
+        style={{
+          ...APP_CONTROL_INPUT_STYLE,
+          textAlign: "left",
+          cursor: disabled ? "not-allowed" : "pointer",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 10,
+          color: selected ? "#111827" : "#94a3b8",
+          background: disabled ? "#f8fafc" : "#fff",
+        }}
+      >
+        <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{displayValue}</span>
+        <span style={{ color: "#94a3b8", fontSize: 12 }}>▾</span>
+      </button>
+      {helperText ? <div style={{ fontSize: 12, color: "#6b7280" }}>{helperText}</div> : null}
+      {open ? (
+        <div
+          style={{
+            position: "absolute",
+            left: 0,
+            right: 0,
+            top: label ? 62 : 42,
+            zIndex: 3,
+            border: "1px solid #cbd5e1",
+            borderRadius: 14,
+            background: "#fff",
+            boxShadow: "0 20px 40px rgba(15, 23, 42, 0.12)",
+            overflow: "hidden",
+          }}
+        >
+          <div style={{ padding: 10, borderBottom: "1px solid #e5e7eb", background: "#f9fafb" }}>
+            <input
+              type="text"
+              autoFocus
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="Type to search..."
+              style={{ ...APP_CONTROL_INPUT_STYLE, padding: "10px 12px" }}
+            />
+          </div>
+          <div style={{ maxHeight: 240, overflowY: "auto" }}>
+            {filtered.length ? (
+              filtered.map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => {
+                    onChange(option.value || null);
+                    setOpen(false);
+                  }}
+                  style={{
+                    width: "100%",
+                    textAlign: "left",
+                    padding: "12px 14px",
+                    border: "none",
+                    background: option.value === value ? "#eff6ff" : "#fff",
+                    cursor: "pointer",
+                    borderBottom: "1px solid #f1f5f9",
+                  }}
+                >
+                  <div style={{ fontSize: 13, fontWeight: 700, color: "#111827" }}>{option.label}</div>
+                  <div style={{ marginTop: 3, fontSize: 12, color: "#6b7280" }}>
+                    {option.description || option.value}
+                  </div>
+                </button>
+              ))
+            ) : (
+              <div style={{ padding: 14, fontSize: 13, color: "#6b7280" }}>{emptyText}</div>
+            )}
+          </div>
+        </div>
+      ) : null}
+    </div>
   );
 };
 
@@ -224,7 +414,7 @@ const LoginPage = ({ onLogin }) => {
             {loading ? "Signing in..." : "Sign In"} <Icon d={icons.login} size={16} stroke="#fff" />
           </button>
           <div style={{ display: "flex", gap: 8, marginTop: 6 }}>
-            <button onClick={() => onLogin("customer", "customer", true)} style={{ flex: 1, padding: "10px", borderRadius: 10, border: "1px solid #6d5efc", background: "#fff", cursor: "pointer", fontWeight: 700, color: "#5b49ff" }}>Customer Portal</button>
+            <button onClick={() => onLogin("customer", "products", true)} style={{ flex: 1, padding: "10px", borderRadius: 10, border: "1px solid #6d5efc", background: "#fff", cursor: "pointer", fontWeight: 700, color: "#5b49ff" }}>Customer Portal</button>
             <button onClick={() => onLogin("supplier", "supplier", true)} style={{ flex: 1, padding: "10px", borderRadius: 10, border: "1px solid #6d5efc", background: "#fff", cursor: "pointer", fontWeight: 700, color: "#5b49ff" }}>Supplier Portal</button>
           </div>
         </div>
@@ -235,20 +425,56 @@ const LoginPage = ({ onLogin }) => {
   );
 };
 
+const getNiceScaleMax = (value) => {
+  const numeric = Math.max(0, Number(value || 0));
+  if (numeric === 0) return 1;
+  const magnitude = 10 ** Math.floor(Math.log10(numeric));
+  const normalized = numeric / magnitude;
+  const nice = normalized <= 1 ? 1 : normalized <= 2 ? 2 : normalized <= 5 ? 5 : 10;
+  return nice * magnitude;
+};
+
 const DashboardPage = () => {
   const snapshot = useAdminSnapshot();
-  const barHeights = [55, 40, 65, 85, 60, 70, 90];
-  const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+  const revenueSeries = snapshot?.revenueSeries?.length ? snapshot.revenueSeries : Array.from({ length: 7 }, (_, index) => ({ label: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"][index], value: 0 }));
+  const days = revenueSeries.map((item) => item.label);
+  const chartValues = revenueSeries.map((item) => Number(item.value || 0));
+  const chartMax = getNiceScaleMax(Math.max(0, ...chartValues));
+  const chartTop = 12;
+  const chartBottom = 88;
+  const chartLeft = 6;
+  const chartRight = 94;
+  const chartPoints = chartValues.map((value, index) => {
+    const x = revenueSeries.length > 1 ? chartLeft + (index / (revenueSeries.length - 1)) * (chartRight - chartLeft) : 50;
+    const ratio = chartMax > 0 ? value / chartMax : 0;
+    const y = chartBottom - ratio * (chartBottom - chartTop);
+    return { x, y, value };
+  });
+  const chartLinePoints = chartPoints.map((point) => `${point.x.toFixed(2)},${point.y.toFixed(2)}`).join(" ");
+  const chartAreaPoints = [
+    `${chartLeft},${chartBottom}`,
+    ...chartPoints.map((point) => `${point.x.toFixed(2)},${point.y.toFixed(2)}`),
+    `${chartRight},${chartBottom}`,
+  ].join(" ");
+  const chartTicks = Array.from({ length: 5 }, (_, index) => {
+    const value = (chartMax / 4) * index;
+    const ratio = chartMax > 0 ? value / chartMax : 0;
+    const y = chartBottom - ratio * (chartBottom - chartTop);
+    return { value, y };
+  }).reverse();
   const rows = snapshot?.salesRows || [
-    { id: "#TX-94021", name: "MacBook Pro M3", date: "Oct 24, 2023 · 14:20", qty: "12 Units", status: "In Stock", statusColor: "green", amount: "$24,400.00" },
-    { id: "#TX-94020", name: "Magic Keyboard", date: "Oct 24, 2023 · 12:45", qty: "2 Units", status: "Low Stock", statusColor: "yellow", amount: "$298.00" },
-    { id: "#TX-94019", name: "AirPods Pro", date: "Oct 23, 2023 · 09:11", qty: "5 Units", status: "In Stock", statusColor: "green", amount: "$1,245.00" },
+    { id: "#TX-94021", name: "MacBook Pro M3", date: "Oct 24, 2023 · 14:20", qty: "12 Units", status: "In Stock", statusColor: "green", amount: "Rs. 24,400.00" },
+    { id: "#TX-94020", name: "Magic Keyboard", date: "Oct 24, 2023 · 12:45", qty: "2 Units", status: "Low Stock", statusColor: "yellow", amount: "Rs. 298.00" },
+    { id: "#TX-94019", name: "AirPods Pro", date: "Oct 23, 2023 · 09:11", qty: "5 Units", status: "In Stock", statusColor: "green", amount: "Rs. 1,245.00" },
   ];
   const totalProducts = snapshot?.totalProducts ?? 2450;
   const totalStock = snapshot?.totalStock ?? 1890;
   const lowStockCount = snapshot?.lowStockCount ?? 12;
   const outOfStockCount = snapshot?.outOfStockCount ?? 0;
-  const dailySales = snapshot?.totalRevenue ?? 4200;
+  const dailySales = snapshot?.dailyRevenue ?? snapshot?.totalRevenue ?? 4200;
+  const revenueModeLabel = snapshot?.revenueModeEnabled ? "Fake revenue enabled" : "Live revenue enabled";
+  const peakSeriesIndex = revenueSeries.reduce((bestIndex, item, index, list) => (Number(item.value || 0) > Number(list[bestIndex]?.value || 0) ? index : bestIndex), 0);
+  const peakSeriesValue = revenueSeries[peakSeriesIndex]?.value || 0;
   const healthySkuCount = Math.max(0, totalProducts - lowStockCount - outOfStockCount);
   const turnoverRate = totalProducts > 0 ? Math.round((healthySkuCount / totalProducts) * 100) : 0;
   const slowMovingRate = totalProducts > 0 ? Math.round((lowStockCount / totalProducts) * 100) : 0;
@@ -270,49 +496,71 @@ const DashboardPage = () => {
         <StatCard icon={<Icon d={icons.box} size={18} />} label="Total Products" value={Number(totalProducts).toLocaleString()} sub="Live from inventory" subColor="#10b981" />
         <StatCard icon={<Icon d={icons.check} size={18} />} label="Available Stock" value={Number(totalStock).toLocaleString()} sub="Updated from store" subColor="#6b7280" />
         <StatCard icon={<Icon d={icons.alert} size={18} stroke="#dc2626" />} label="Low Stock Items" value={Number(lowStockCount).toLocaleString()} sub="Needs reorder" subColor="#dc2626" highlight />
-        <StatCard icon={<Icon d={icons.receipt} size={18} />} label="Daily Sales" value={`${Number(dailySales || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} sub="Synced from orders" subColor="#10b981" />
+        <StatCard icon={<Icon d={icons.receipt} size={18} />} label="Daily Sales" value={formatRs(dailySales || 0)} sub="Synced from orders" subColor="#10b981" />
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 16, marginBottom: 20 }}>
         <div style={{ background: "#fff", borderRadius: 12, border: "1px solid #e5e7eb", padding: 20, boxShadow: "0 1px 3px rgba(0, 0, 0, 0.05)", transition: "all 0.3s ease" }} onMouseEnter={(e) => { e.currentTarget.style.boxShadow = "0 4px 12px rgba(0, 0, 0, 0.08)"; }} onMouseLeave={(e) => { e.currentTarget.style.boxShadow = "0 1px 3px rgba(0, 0, 0, 0.05)"; }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18 }}>
             <div>
-              <h2 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: "#111827" }}>Stock Analytics</h2>
-              <div style={{ marginTop: 6, fontSize: 12, color: "#6b7280", fontWeight: 400 }}>Live inventory trend from the shared store</div>
+              <h2 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: "#111827" }}>Revenue Analytics</h2>
+              <div style={{ marginTop: 6, fontSize: 12, color: "#6b7280", fontWeight: 400 }}>7-day revenue snapshot powered by the profile toggle</div>
             </div>
-            <div style={{ display: "flex", gap: 8 }}>
-              <button style={{ padding: "6px 12px", border: "1px solid #e5e7eb", borderRadius: 6, background: "#fff", cursor: "pointer", fontSize: 12, fontWeight: 600, color: "#6b7280", transition: "all 0.2s ease" }} onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#d1d5db"; }} onMouseLeave={(e) => { e.currentTarget.style.borderColor = "#e5e7eb"; }}>Last 7 Days</button>
-              <button style={{ padding: "6px 12px", border: "1px solid #e5e7eb", borderRadius: 6, background: "#fff", cursor: "pointer", fontSize: 12, fontWeight: 600, color: "#6b7280", transition: "all 0.2s ease" }} onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#d1d5db"; }} onMouseLeave={(e) => { e.currentTarget.style.borderColor = "#e5e7eb"; }}>Monthly</button>
-            </div>
+            <Badge color={snapshot?.revenueModeEnabled ? "blue" : "gray"}>{revenueModeLabel}</Badge>
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "1.3fr 0.7fr", gap: 18, alignItems: "end" }}>
-            <div style={{ position: "relative", minHeight: 240, padding: "8px 0 0" }}>
-              <div style={{ position: "absolute", inset: 0, display: "grid", gridTemplateRows: "repeat(4, 1fr)", rowGap: 0 }}>
-                {Array.from({ length: 4 }).map((_, index) => (
-                  <div key={index} style={{ borderTop: "1px solid #eef2ff" }} />
-                ))}
-              </div>
-              <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", height: 220, padding: "0 8px", position: "relative" }}>
-                {barHeights.map((value, i) => (
-                  <div key={i} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 10 }}>
-                    <div style={{ width: "100%", minHeight: 18, position: "relative", borderRadius: 999, background: "#eff6ff", overflow: "hidden", boxShadow: "inset 0 1px 2px rgba(15, 23, 42, 0.06)" }}>
-                      <div style={{ position: "absolute", bottom: 0, left: 0, width: "100%", height: `${value}%`, background: i === 6 ? "linear-gradient(180deg, #2563eb 0%, #1d4ed8 100%)" : "linear-gradient(180deg, #93c5fd 0%, #60a5fa 100%)", borderRadius: "999px", transition: "all 0.2s ease" }} />
-                    </div>
-                    <span style={{ fontSize: 11, color: "#111827", fontWeight: 600 }}>{value}%</span>
-                    <span style={{ fontSize: 12, color: "#9ca3af", fontWeight: 400 }}>{days[i]}</span>
-                  </div>
-                ))}
-                <div style={{ position: "absolute", left: 0, right: 0, top: 0, bottom: 0, pointerEvents: "none" }}>
-                  <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none" style={{ position: "absolute", top: 0, left: 0 }}>
-                    <polyline fill="none" stroke="#2563eb" strokeWidth="1.5" strokeLinejoin="round" points="0,70 16,50 33,62 50,32 66,44 83,36 100,20" />
+            <div style={{ minHeight: 320, display: "flex", flexDirection: "column", gap: 10 }}>
+              <div style={{ position: "relative", flex: 1, minHeight: 240, borderRadius: 16, background: "linear-gradient(180deg, #f8fbff 0%, #ffffff 100%)", border: "1px solid #e9eef8", overflow: "hidden" }}>
+                <div style={{ position: "absolute", left: 12, right: 14, top: 14, bottom: 44 }}>
+                  <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none" style={{ display: "block" }}>
+                    <defs>
+                      <linearGradient id="revenueFill" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#93c5fd" stopOpacity="0.34" />
+                        <stop offset="100%" stopColor="#93c5fd" stopOpacity="0.04" />
+                      </linearGradient>
+                      <linearGradient id="revenueLine" x1="0" y1="0" x2="1" y2="0">
+                        <stop offset="0%" stopColor="#60a5fa" />
+                        <stop offset="100%" stopColor="#2563eb" />
+                      </linearGradient>
+                    </defs>
+                    {chartTicks.map((tick) => (
+                      <line key={tick.value} x1="0" x2="100" y1={tick.y} y2={tick.y} stroke="#eef2ff" strokeWidth="1" vectorEffect="non-scaling-stroke" />
+                    ))}
+                    <polygon points={chartAreaPoints} fill="url(#revenueFill)" />
+                    <polyline fill="none" stroke="url(#revenueLine)" strokeWidth="1.8" strokeLinejoin="round" strokeLinecap="round" points={chartLinePoints} vectorEffect="non-scaling-stroke" />
+                    {chartPoints.map((point, index) => (
+                      <g key={index}>
+                        <circle
+                          cx={point.x}
+                          cy={point.y}
+                          r="1.6"
+                          fill="#fff"
+                          stroke="#2563eb"
+                          strokeWidth="1.3"
+                          vectorEffect="non-scaling-stroke"
+                        />
+                      </g>
+                    ))}
                   </svg>
+                </div>
+                <div style={{ position: "absolute", left: 12, right: 14, bottom: 24, display: "grid", gridTemplateColumns: `repeat(${days.length}, minmax(0, 1fr))`, gap: 6, pointerEvents: "none" }}>
+                  {chartPoints.map((point, index) => (
+                    <div key={`amount-${days[index]}-${index}`} style={{ textAlign: "center", fontSize: 12, color: "#111827", fontWeight: 700, lineHeight: 1.1 }}>
+                      {formatRs(point.value || 0, 0)}
+                    </div>
+                  ))}
+                </div>
+                <div style={{ position: "absolute", left: 12, right: 14, bottom: 8, display: "grid", gridTemplateColumns: `repeat(${days.length}, minmax(0, 1fr))`, gap: 6 }}>
+                  {days.map((day, index) => (
+                    <div key={day + index} style={{ textAlign: "center", fontSize: 12, color: "#94a3b8", fontWeight: 600 }}>{day}</div>
+                  ))}
                 </div>
               </div>
             </div>
             <div style={{ display: "grid", gap: 12 }}>
               {[
-                { label: "Current Stock", value: `${turnoverRate}%`, note: `${healthySkuCount.toLocaleString()} healthy SKUs`, color: "#2563eb" },
-                { label: "Forecast", value: `${Math.max(0, 100 - turnoverRate)}%`, note: "Expected pressure", color: "#10b981" },
-                { label: "Restock Due", value: `${lowStockCount + outOfStockCount}`, note: "SKUs needing reorder", color: "#f59e0b" },
+                { label: "7-Day Total", value: formatRs(snapshot?.totalRevenue ?? 0), note: "Combined weekly revenue", color: "#2563eb" },
+                { label: "Daily Average", value: formatRs((snapshot?.totalRevenue ?? 0) / 7, 0), note: "Average per day", color: "#10b981" },
+                { label: "Peak Day", value: formatRs(peakSeriesValue || 0, 0), note: days[peakSeriesIndex] || "This week", color: "#f59e0b" },
               ].map((item, idx) => (
                 <div key={idx} style={{ background: "#f8fafc", borderRadius: 12, padding: "14px 16px" }}>
                   <div style={{ fontSize: 11, color: "#6b7280", fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.4, marginBottom: 6 }}>{item.label}</div>
@@ -323,8 +571,8 @@ const DashboardPage = () => {
             </div>
           </div>
           <div style={{ marginTop: 16, display: "flex", justifyContent: "space-between", fontSize: 12, color: "#6b7280" }}>
-            <span>Trend: Balanced stock flow</span>
-            <span>Peak stock forecast for Fri</span>
+            <span>Mode: {revenueModeLabel}</span>
+            <span>Peak day: {days[peakSeriesIndex] || "N/A"}</span>
           </div>
         </div>
         <div style={{ background: "#fff", borderRadius: 12, border: "1px solid #e5e7eb", padding: 20, boxShadow: "0 1px 3px rgba(0, 0, 0, 0.05)" }}>
@@ -389,10 +637,21 @@ const ProductsPage = ({ role = "admin" }) => {
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [stockFilter, setStockFilter] = useState("all");
   const [productPage, setProductPage] = useState(1);
+  const [dialog, setDialog] = useState(null);
+  const [dialogForm, setDialogForm] = useState({});
   const canEdit = role === "admin";
   const columns = canEdit
     ? ["SKU", "Product Name", "Category", "Supplier", "Price", "Stock Level", "Actions"]
     : ["Product Name", "Stock Level"];
+  const supplierOptions = suppliers.map((supplier) => {
+    const companyName = supplier.companyName || supplier.name || supplier.contactName || "Supplier";
+    const contactName = supplier.contactName || supplier.contact || "";
+    return {
+      value: supplier.id,
+      label: companyName,
+      description: contactName ? `${contactName}${supplier.email ? ` • ${supplier.email}` : ""}` : supplier.email || supplier.phone || "Supplier",
+    };
+  });
 
   const load = async () => {
     setError(null);
@@ -460,14 +719,8 @@ const ProductsPage = ({ role = "admin" }) => {
 
   const handleEdit = async (p) => {
     if (!canEdit) return;
-    try {
-      const qty = parseInt(prompt("New quantity:", String(p.quantity || 0)), 10);
-      if (Number.isNaN(qty)) return;
-      await productService.update(p.id, { quantity: qty });
-      await load();
-    } catch (err) {
-      alert(err.message || "Failed to update");
-    }
+    setDialog({ type: "edit-quantity", product: p });
+    setDialogForm({ quantity: String(p.quantity || 0) });
   };
 
   const handleLinkSupplier = async (product) => {
@@ -476,68 +729,97 @@ const ProductsPage = ({ role = "admin" }) => {
       alert("No suppliers available to link.");
       return;
     }
-    const chosen = prompt(
-      `Enter supplier ID, company name, or contact name:\n${suppliers.map((supplier) => `${supplier.id}: ${supplier.companyName || supplier.contactName || "Supplier"}`).join("\n")}`,
-      product.supplierId || suppliers[0].id
-    );
-    if (!chosen) return;
-    const supplier = suppliers.find((item) => {
-      const value = chosen.trim().toLowerCase();
-      return (
-        String(item.id || "").toLowerCase() === value ||
-        String(item.companyName || "").toLowerCase() === value ||
-        String(item.contactName || "").toLowerCase() === value
-      );
-    });
-    if (!supplier) {
-      alert("Supplier not found.");
-      return;
-    }
-    try {
-      await productService.update(product.id, { supplierId: supplier.id });
-      await load();
-    } catch (err) {
-      alert(err.message || "Failed to link supplier");
-    }
+    setDialog({ type: "link-supplier", product });
+    setDialogForm({ supplierId: product.supplierId || suppliers[0].id });
   };
 
   const handleAdd = async () => {
     if (!canEdit) return;
-    try {
-      const name = prompt("Product name:");
-      if (!name) return;
-      const sku = prompt("SKU:", `SKU-${Math.random().toString(36).slice(2,6).toUpperCase()}`) || "";
-      const category = prompt("Category:", "General") || "General";
-      const price = parseFloat(prompt("Price (number):", "0")) || 0;
-      const quantity = parseInt(prompt("Quantity:", "0"), 10) || 0;
-      await productService.create({ sku, name, category, price, quantity, supplierId: null, status: quantity === 0 ? "out_of_stock" : quantity < 20 ? "low_stock" : "in_stock" });
-      await load();
-    } catch (err) {
-      alert(err.message || "Failed to create product");
-    }
+    setDialog({ type: "add-product" });
+    setDialogForm({
+      name: "",
+      sku: `SKU-${Math.random().toString(36).slice(2, 6).toUpperCase()}`,
+      category: "General",
+      price: "0",
+      quantity: "0",
+      supplierId: "",
+    });
   };
 
   const handleRequest = async (product) => {
     if (!canEdit) return;
+    setDialog({ type: "request-restock", product });
+    setDialogForm({
+      quantity: String(Math.max(25, Number(product.quantity || 0) * 5 || 25)),
+      priority: "medium",
+      reason: "Manual request from admin",
+    });
+  };
+
+  const closeDialog = () => {
+    setDialog(null);
+    setDialogForm({});
+  };
+
+  const submitDialog = async (event) => {
+    event.preventDefault();
+    if (!dialog?.type) return;
     try {
-      const quantity = parseInt(prompt("Restock quantity:", String(Math.max(25, Number(product.quantity || 0) * 5 || 25))), 10);
-      if (Number.isNaN(quantity) || quantity <= 0) return;
-      const priorityInput = prompt("Priority (low, medium, high):", "medium") || "medium";
-      const normalizedPriority = ["low", "medium", "high"].includes(priorityInput.trim().toLowerCase())
-        ? priorityInput.trim().toLowerCase()
-        : "medium";
-      const reason = prompt("Request reason (optional):", "Manual request from admin") || "Manual request from admin";
-      await restockService.createManualRequest({
-        productId: product.id,
-        productName: product.name,
-        supplierId: product.supplierId,
-        quantity,
-        priority: normalizedPriority.charAt(0).toUpperCase() + normalizedPriority.slice(1),
-        reason,
-      });
+      if (dialog.type === "add-product") {
+        const name = dialogForm.name.trim();
+        if (!name) {
+          alert("Product name is required.");
+          return;
+        }
+        const quantity = parseInt(dialogForm.quantity, 10) || 0;
+        const price = parseFloat(dialogForm.price) || 0;
+        await productService.create({
+          sku: dialogForm.sku.trim(),
+          name,
+          category: dialogForm.category.trim() || "General",
+          price,
+          quantity,
+          supplierId: dialogForm.supplierId || null,
+          status: quantity === 0 ? "out_of_stock" : quantity < 20 ? "low_stock" : "in_stock",
+        });
+      }
+      if (dialog.type === "edit-quantity") {
+        const quantity = parseInt(dialogForm.quantity, 10);
+        if (Number.isNaN(quantity)) {
+          alert("Please enter a valid quantity.");
+          return;
+        }
+        await productService.update(dialog.product.id, { quantity });
+      }
+      if (dialog.type === "link-supplier") {
+        if (!dialogForm.supplierId) {
+          alert("Please choose a supplier.");
+          return;
+        }
+        await productService.update(dialog.product.id, { supplierId: dialogForm.supplierId });
+      }
+      if (dialog.type === "request-restock") {
+        const quantity = parseInt(dialogForm.quantity, 10);
+        if (Number.isNaN(quantity) || quantity <= 0) {
+          alert("Please enter a valid restock quantity.");
+          return;
+        }
+        const priority = ["low", "medium", "high"].includes(String(dialogForm.priority || "").trim().toLowerCase())
+          ? String(dialogForm.priority || "").trim().toLowerCase()
+          : "medium";
+        await restockService.createManualRequest({
+          productId: dialog.product.id,
+          productName: dialog.product.name,
+          supplierId: dialog.product.supplierId,
+          quantity,
+          priority: priority.charAt(0).toUpperCase() + priority.slice(1),
+          reason: (dialogForm.reason || "Manual request from admin").trim() || "Manual request from admin",
+        });
+      }
+      closeDialog();
       await load();
     } catch (err) {
-      alert(err.message || "Failed to create request");
+      alert(err.message || "Something went wrong");
     }
   };
 
@@ -643,11 +925,34 @@ const ProductsPage = ({ role = "admin" }) => {
         </div>
         <div style={{ overflowX: "auto" }}>
           {error && <div style={{ padding: 12, color: "#ef4444" }}>{error}</div>}
-          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13, tableLayout: "fixed" }}>
             <thead>
               <tr style={{ borderBottom: "2px solid #e5e7eb", background: "#f9fafb" }}>
-                {columns.map(h => (
-                  <th key={h} style={{ textAlign: "left", padding: "12px 16px", fontSize: 11, fontWeight: 700, color: "#9ca3af", letterSpacing: 0.5, textTransform: "uppercase" }}>{h}</th>
+                {columns.map((h) => (
+                  <th
+                    key={h}
+                    style={{
+                      textAlign: "left",
+                      padding: "12px 16px",
+                      fontSize: 11,
+                      fontWeight: 700,
+                      color: "#9ca3af",
+                      letterSpacing: 0.5,
+                      textTransform: "uppercase",
+                      whiteSpace: "nowrap",
+                      width:
+                        h === "SKU" ? 120 :
+                        h === "Product Name" ? 280 :
+                        h === "Category" ? 140 :
+                        h === "Supplier" ? 160 :
+                        h === "Price" ? 120 :
+                        h === "Stock Level" ? 150 :
+                        h === "Actions" ? 240 :
+                        "auto",
+                    }}
+                  >
+                    {h}
+                  </th>
                 ))}
               </tr>
             </thead>
@@ -655,62 +960,54 @@ const ProductsPage = ({ role = "admin" }) => {
               {visibleProducts.map((p, idx) => {
                 const stockLabel = (p.quantity || 0) === 0 ? "OUT OF STOCK" : (p.quantity || 0) < 20 ? "LOW STOCK" : "IN STOCK";
                 const stockColor = stockLabel === "OUT OF STOCK" ? "red" : stockLabel === "LOW STOCK" ? "yellow" : "green";
-                const barColor = stockColor === "red" ? "#ef4444" : stockColor === "yellow" ? "#f59e0b" : "#2563eb";
                 return (
                   <tr key={p.id} style={{ borderBottom: "1px solid #e5e7eb", transition: "all 0.2s ease", background: idx % 2 === 0 ? "#f9fafb" : "#fff" }} onMouseEnter={(e) => { e.currentTarget.style.background = "#f3f4f6"; }} onMouseLeave={(e) => { e.currentTarget.style.background = idx % 2 === 0 ? "#f9fafb" : "#fff"; }}>
                     {canEdit ? (
                       <>
-                        <td style={{ padding: "14px 16px", fontWeight: 700, color: "#111827", fontSize: 12 }}>{p.sku || "-"}</td>
+                        <td style={{ padding: "14px 16px", fontWeight: 700, color: "#111827", fontSize: 12, overflow: "hidden", textOverflow: "ellipsis" }}>{p.sku || "-"}</td>
                         <td style={{ padding: "14px 16px" }}>
-                          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                            <div style={{ width: 36, height: 36, background: "#f3f4f6", borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", color: "#111827", fontWeight: 600, fontSize: 12 }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
+                            <div style={{ width: 36, height: 36, background: "#f3f4f6", borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center", color: "#111827", fontWeight: 700, fontSize: 12, flexShrink: 0 }}>
                               {p.sku ? p.sku.slice(0, 1) : "P"}
                             </div>
-                            <div>
-                              <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-                                <div style={{ fontWeight: 600, color: "#111827" }}>{p.name}</div>
-                                {!p.supplierId ? (
-                                  <span style={{ display: "inline-flex", alignItems: "center", gap: 4, color: "#991b1b", fontSize: 11, fontWeight: 600, padding: "3px 8px", borderRadius: 999, border: "1px solid #fecaca", background: "#fef2f2" }}>
-                                    <Icon d={icons.x} size={11} stroke="#b91c1c" />
-                                    Not linked
-                                  </span>
-                                ) : null}
-                              </div>
-                              <div style={{ fontSize: 12, color: "#9ca3af", marginTop: 2 }}>{p.category}</div>
+                            <div style={{ minWidth: 0, maxWidth: 260 }}>
+                              <div style={{ fontWeight: 700, color: "#111827", lineHeight: 1.25, whiteSpace: "normal", wordBreak: "break-word" }}>{p.name}</div>
                             </div>
                           </div>
                         </td>
-                        <td style={{ padding: "14px 16px", color: "#6b7280" }}>{p.category}</td>
+                        <td style={{ padding: "14px 16px", color: "#6b7280", whiteSpace: "nowrap" }}>{p.category}</td>
                         <td style={{ padding: "14px 16px" }}>
                           {p.supplierId ? (
-                            <Badge color="gray">{suppliers.find((supplier) => supplier.id === p.supplierId)?.companyName || "Linked supplier"}</Badge>
+                            <div style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
+                              <span style={{ display: "inline-flex", alignItems: "center", gap: 5, color: "#047857", fontSize: 11, fontWeight: 700, padding: "3px 8px", borderRadius: 999, border: "1px solid #a7f3d0", background: "#ecfdf5" }}>
+                                <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#10b981", display: "inline-block" }} />
+                                Linked
+                              </span>
+                            </div>
                           ) : (
                             <span style={{ display: "inline-flex", alignItems: "center", gap: 4, color: "#991b1b", fontSize: 11, fontWeight: 600, padding: "3px 8px", borderRadius: 999, border: "1px solid #fecaca", background: "#fef2f2" }}>
                               <Icon d={icons.x} size={11} stroke="#b91c1c" />
-                              Not linked
+                              Unlinked
                             </span>
                           )}
                         </td>
-                        <td style={{ padding: "14px 16px", fontWeight: 700, color: "#111827" }}>${(p.price || 0).toFixed(2)}</td>
+                        <td style={{ padding: "14px 16px", fontWeight: 700, color: "#111827", whiteSpace: "nowrap" }}>{formatRs(p.price)}</td>
                         <td style={{ padding: "14px 16px" }}>
-                          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                            <div style={{ width: 40, height: 6, background: "#e5e7eb", borderRadius: 3, overflow: "hidden" }}>
-                              <div style={{ height: "100%", background: barColor, width: (p.quantity === 0 ? 5 : p.quantity < 20 ? 30 : 80) + "%", borderRadius: 3, transition: "width 0.3s ease" }} />
-                            </div>
-                            <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                              <Badge color={stockColor}>{stockLabel}</Badge>
-                              <span style={{ fontSize: 12, color: "#6b7280", fontWeight: 600 }}>{Number(p.quantity || 0).toLocaleString()} units</span>
-                            </div>
+                          <div style={{ display: "flex", flexDirection: "column", gap: 3, minWidth: 0 }}>
+                            <span style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 11, fontWeight: 700, color: stockColor === "red" ? "#b91c1c" : stockColor === "yellow" ? "#b45309" : "#047857", padding: "3px 8px", borderRadius: 999, border: `1px solid ${stockColor === "red" ? "#fecaca" : stockColor === "yellow" ? "#fed7aa" : "#a7f3d0"}`, background: stockColor === "red" ? "#fef2f2" : stockColor === "yellow" ? "#fffbeb" : "#ecfdf5", width: "fit-content" }}>
+                              {stockLabel}
+                            </span>
+                            <span style={{ fontSize: 12, color: "#6b7280", fontWeight: 600 }}>{Number(p.quantity || 0).toLocaleString()} units</span>
                           </div>
                         </td>
                         <td style={{ padding: "14px 16px" }}>
                           {editMode ? (
-                            <>
-                              <button onClick={() => handleLinkSupplier(p)} style={{ padding: "6px 12px", border: "1px solid #111827", borderRadius: 6, background: "#fff", cursor: "pointer", fontSize: 12, fontWeight: 700, color: "#111827", transition: "all 0.2s ease", marginRight: 8 }}>Link Supplier</button>
-                              <button onClick={() => handleRequest(p)} style={{ padding: "6px 12px", border: "1px solid #111827", borderRadius: 6, background: "#fff", cursor: "pointer", fontSize: 12, fontWeight: 700, color: "#111827", transition: "all 0.2s ease", marginRight: 8 }}>Request</button>
-                              <button onClick={() => handleEdit(p)} style={{ padding: "6px 12px", border: "1px solid #111827", borderRadius: 6, background: "#fff", cursor: "pointer", fontSize: 12, fontWeight: 700, color: "#111827", transition: "all 0.2s ease", marginRight: 8 }}>Edit</button>
-                              <button onClick={() => handleDelete(p.id)} style={{ padding: "6px 12px", border: "1px solid #111827", borderRadius: 6, background: "#fff", cursor: "pointer", fontSize: 12, fontWeight: 700, color: "#111827", transition: "all 0.2s ease" }}>Delete</button>
-                            </>
+                            <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                              <button onClick={() => handleLinkSupplier(p)} style={{ ...APP_CONTROL_BUTTON_STYLE, padding: "8px 12px", fontSize: 12 }}>Link</button>
+                              <button onClick={() => handleRequest(p)} style={{ ...APP_CONTROL_BUTTON_STYLE, padding: "8px 12px", fontSize: 12 }}>Request</button>
+                              <button onClick={() => handleEdit(p)} style={{ ...APP_CONTROL_BUTTON_STYLE, padding: "8px 12px", fontSize: 12 }}>Edit</button>
+                              <button onClick={() => handleDelete(p.id)} style={{ ...APP_CONTROL_BUTTON_STYLE, padding: "8px 12px", fontSize: 12 }}>Delete</button>
+                            </div>
                           ) : (
                             <span style={{ fontSize: 12, color: "#9ca3af", fontWeight: 700 }}>Edit mode required</span>
                           )}
@@ -718,16 +1015,13 @@ const ProductsPage = ({ role = "admin" }) => {
                       </>
                     ) : (
                       <>
-                        <td style={{ padding: "14px 16px", fontWeight: 600, color: "#111827" }}>{p.name}</td>
+                        <td style={{ padding: "14px 16px", fontWeight: 700, color: "#111827" }}>{p.name}</td>
                         <td style={{ padding: "14px 16px" }}>
-                          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                            <div style={{ width: 40, height: 6, background: "#e5e7eb", borderRadius: 3, overflow: "hidden" }}>
-                              <div style={{ height: "100%", background: barColor, width: (p.quantity === 0 ? 5 : p.quantity < 20 ? 30 : 80) + "%", borderRadius: 3, transition: "width 0.3s ease" }} />
-                            </div>
-                            <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                              <Badge color={stockColor}>{stockLabel}</Badge>
-                              <span style={{ fontSize: 12, color: "#6b7280", fontWeight: 600 }}>{Number(p.quantity || 0).toLocaleString()} units</span>
-                            </div>
+                          <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+                            <span style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 11, fontWeight: 700, color: stockColor === "red" ? "#b91c1c" : stockColor === "yellow" ? "#b45309" : "#047857", padding: "3px 8px", borderRadius: 999, border: `1px solid ${stockColor === "red" ? "#fecaca" : stockColor === "yellow" ? "#fed7aa" : "#a7f3d0"}`, background: stockColor === "red" ? "#fef2f2" : stockColor === "yellow" ? "#fffbeb" : "#ecfdf5", width: "fit-content" }}>
+                              {stockLabel}
+                            </span>
+                            <span style={{ fontSize: 12, color: "#6b7280", fontWeight: 600 }}>{Number(p.quantity || 0).toLocaleString()} units</span>
                           </div>
                         </td>
                       </>
@@ -745,6 +1039,136 @@ const ProductsPage = ({ role = "admin" }) => {
           <Pagination currentPage={productPage} totalPages={productPageCount} onPageChange={setProductPage} />
         </div>
       </div>
+
+      <Modal
+        open={Boolean(dialog)}
+        title={
+          dialog?.type === "add-product"
+            ? "Add Product"
+            : dialog?.type === "edit-quantity"
+              ? "Update Quantity"
+              : dialog?.type === "link-supplier"
+                ? "Link Supplier"
+                : dialog?.type === "request-restock"
+                  ? "Create Restock Request"
+                  : ""
+        }
+        subtitle={
+          dialog?.type === "add-product"
+            ? "Create a new inventory item and optionally link it to a supplier."
+            : dialog?.type === "edit-quantity"
+              ? dialog?.product?.name
+              : dialog?.type === "link-supplier"
+                ? dialog?.product?.name
+                : dialog?.type === "request-restock"
+                  ? `${dialog?.product?.name} will be queued for procurement`
+                  : ""
+        }
+        onClose={closeDialog}
+        width={dialog?.type === "request-restock" ? 540 : 680}
+      >
+        <form onSubmit={submitDialog} style={{ display: "grid", gap: 16 }}>
+          {dialog?.type === "add-product" ? (
+            <>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 14 }}>
+                <div style={{ display: "grid", gap: 6 }}>
+                  <label style={{ fontSize: 13, fontWeight: 700, color: "#374151" }}>Product name</label>
+                  <input value={dialogForm.name || ""} onChange={(event) => setDialogForm((current) => ({ ...current, name: event.target.value }))} style={APP_CONTROL_INPUT_STYLE} placeholder="Enter a product name" />
+                </div>
+                <div style={{ display: "grid", gap: 6 }}>
+                  <label style={{ fontSize: 13, fontWeight: 700, color: "#374151" }}>SKU</label>
+                  <input value={dialogForm.sku || ""} onChange={(event) => setDialogForm((current) => ({ ...current, sku: event.target.value }))} style={APP_CONTROL_INPUT_STYLE} />
+                </div>
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 14 }}>
+                <div style={{ display: "grid", gap: 6 }}>
+                  <label style={{ fontSize: 13, fontWeight: 700, color: "#374151" }}>Category</label>
+                  <input value={dialogForm.category || ""} onChange={(event) => setDialogForm((current) => ({ ...current, category: event.target.value }))} style={APP_CONTROL_INPUT_STYLE} placeholder="General" />
+                </div>
+                <div style={{ display: "grid", gap: 6 }}>
+                  <label style={{ fontSize: 13, fontWeight: 700, color: "#374151" }}>Price</label>
+                  <input type="number" min="0" step="0.01" value={dialogForm.price || "0"} onChange={(event) => setDialogForm((current) => ({ ...current, price: event.target.value }))} style={APP_CONTROL_INPUT_STYLE} />
+                </div>
+                <div style={{ display: "grid", gap: 6 }}>
+                  <label style={{ fontSize: 13, fontWeight: 700, color: "#374151" }}>Quantity</label>
+                  <input type="number" min="0" step="1" value={dialogForm.quantity || "0"} onChange={(event) => setDialogForm((current) => ({ ...current, quantity: event.target.value }))} style={APP_CONTROL_INPUT_STYLE} />
+                </div>
+              </div>
+              <SearchableSelect
+                label="Supplier"
+                placeholder="Select a supplier"
+                value={dialogForm.supplierId || ""}
+                onChange={(value) => setDialogForm((current) => ({ ...current, supplierId: value }))}
+                options={supplierOptions}
+                helperText="Optional, but recommended for stock and sourcing workflows."
+                emptyText="No suppliers available."
+                allowEmptyOption
+                emptyOptionLabel="No supplier / Unlinked"
+                disabled={!supplierOptions.length}
+              />
+            </>
+          ) : null}
+
+          {dialog?.type === "edit-quantity" ? (
+            <div style={{ display: "grid", gap: 6 }}>
+              <label style={{ fontSize: 13, fontWeight: 700, color: "#374151" }}>New quantity</label>
+              <input type="number" min="0" step="1" value={dialogForm.quantity || "0"} onChange={(event) => setDialogForm((current) => ({ ...current, quantity: event.target.value }))} style={APP_CONTROL_INPUT_STYLE} />
+            </div>
+          ) : null}
+
+          {dialog?.type === "link-supplier" ? (
+            <SearchableSelect
+              label="Supplier"
+              placeholder="Search by company, contact, or supplier ID"
+              value={dialogForm.supplierId || ""}
+              onChange={(value) => setDialogForm((current) => ({ ...current, supplierId: value }))}
+              options={supplierOptions}
+              helperText="This is better than typing s_1, s_2, etc. because it prevents mismatches."
+              emptyText="No matching suppliers."
+              allowEmptyOption
+              emptyOptionLabel="No supplier / Unlinked"
+            />
+          ) : null}
+
+          {dialog?.type === "request-restock" ? (
+            <div style={{ display: "grid", gap: 14 }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 14 }}>
+                <div style={{ display: "grid", gap: 6 }}>
+                  <label style={{ fontSize: 13, fontWeight: 700, color: "#374151" }}>Restock quantity</label>
+                  <input type="number" min="1" step="1" value={dialogForm.quantity || "1"} onChange={(event) => setDialogForm((current) => ({ ...current, quantity: event.target.value }))} style={APP_CONTROL_INPUT_STYLE} />
+                </div>
+                <div style={{ display: "grid", gap: 6 }}>
+                  <label style={{ fontSize: 13, fontWeight: 700, color: "#374151" }}>Priority</label>
+                  <select value={dialogForm.priority || "medium"} onChange={(event) => setDialogForm((current) => ({ ...current, priority: event.target.value }))} style={APP_CONTROL_SELECT_STYLE}>
+                    <option value="low">Low</option>
+                    <option value="medium">Medium</option>
+                    <option value="high">High</option>
+                  </select>
+                </div>
+              </div>
+              <div style={{ display: "grid", gap: 6 }}>
+                <label style={{ fontSize: 13, fontWeight: 700, color: "#374151" }}>Reason</label>
+                <textarea value={dialogForm.reason || ""} onChange={(event) => setDialogForm((current) => ({ ...current, reason: event.target.value }))} rows={4} style={{ ...APP_CONTROL_INPUT_STYLE, resize: "vertical", minHeight: 110 }} />
+              </div>
+            </div>
+          ) : null}
+
+          <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, flexWrap: "wrap", paddingTop: 4 }}>
+            <button type="button" onClick={closeDialog} style={APP_CONTROL_BUTTON_STYLE}>
+              Cancel
+            </button>
+            <button type="submit" style={{ ...APP_CONTROL_BUTTON_STYLE, border: "1px solid #6d5efc", background: APP_ACCENT_GRADIENT, color: "#fff", boxShadow: APP_ACCENT_SHADOW }}>
+              {dialog?.type === "add-product"
+                ? "Create Product"
+                : dialog?.type === "edit-quantity"
+                  ? "Save Quantity"
+                  : dialog?.type === "link-supplier"
+                    ? "Link Supplier"
+                    : "Create Request"}
+            </button>
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 };
@@ -752,11 +1176,17 @@ const ProductsPage = ({ role = "admin" }) => {
 const SuppliersPage = () => {
   const snapshot = useAdminSnapshot();
   const [suppliers, setSuppliers] = useState([]);
+  const [products, setProducts] = useState([]);
   const [editMode, setEditMode] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("all");
   const [supplierPage, setSupplierPage] = useState(1);
+  const [dialog, setDialog] = useState(null);
+  const [dialogForm, setDialogForm] = useState({});
   const load = async () => {
-    const supplierList = await supplierService.list();
+    const [supplierList, productList] = await Promise.all([supplierService.list(), productService.list()]);
     setSuppliers(supplierList || []);
+    setProducts(productList || []);
   };
   useEffect(() => {
     load();
@@ -766,6 +1196,7 @@ const SuppliersPage = () => {
   }, []);
   const rows = (suppliers.length ? suppliers : snapshot?.supplierRows || []).map((supplier, index) => {
     const displayName = supplier.companyName || supplier.name || supplier.contactName || "Supplier";
+    const linkedItems = products.filter((product) => String(product.supplierId || "") === String(supplier.id || ""));
     return {
       id: supplier.id || String(index),
       abbr: (displayName.split(" ").map((part) => part[0]).join("").slice(0, 2) || "SP").toUpperCase(),
@@ -776,33 +1207,87 @@ const SuppliersPage = () => {
       email: supplier.email || "-",
       status: supplier.status || "ACTIVE",
       statusColor: supplier.statusColor || "green",
+      linkedItems,
     };
   });
-  const supplierPageCount = Math.max(1, Math.ceil(rows.length / ITEMS_PER_PAGE));
-  const visibleSuppliers = rows.slice((supplierPage - 1) * ITEMS_PER_PAGE, supplierPage * ITEMS_PER_PAGE);
+  const supplierCategories = ["all", ...new Set(rows.map((row) => row.category).filter(Boolean))];
+  const filteredRows = rows.filter((row) => {
+    const query = searchQuery.trim().toLowerCase();
+    const matchesQuery =
+      !query ||
+      String(row.name || "").toLowerCase().includes(query) ||
+      String(row.contact || "").toLowerCase().includes(query) ||
+      String(row.email || "").toLowerCase().includes(query) ||
+      String(row.phone || "").toLowerCase().includes(query);
+    const matchesCategory = categoryFilter === "all" || String(row.category || "").toLowerCase() === categoryFilter.toLowerCase();
+    return matchesQuery && matchesCategory;
+  });
+  const supplierPageCount = Math.max(1, Math.ceil(filteredRows.length / ITEMS_PER_PAGE));
+  const visibleSuppliers = filteredRows.slice((supplierPage - 1) * ITEMS_PER_PAGE, supplierPage * ITEMS_PER_PAGE);
 
   useEffect(() => {
     setSupplierPage((current) => Math.min(current, supplierPageCount));
   }, [supplierPageCount]);
+
+  useEffect(() => {
+    setSupplierPage(1);
+  }, [searchQuery, categoryFilter]);
   const handleAddSupplier = async () => {
-    const companyName = prompt("Supplier company name:");
-    if (!companyName) return;
-    const contactName = prompt("Contact name:", companyName) || companyName;
-    const category = prompt("Category:", "General") || "General";
-    const phone = prompt("Phone number:", "") || "";
-    const email = prompt("Email address:", "") || "";
-    await supplierService.create({ companyName, contactName, category, phone, email, status: "ACTIVE" });
-    await load();
+    setDialog({ type: "add-supplier" });
+    setDialogForm({
+      companyName: "",
+      contactName: "",
+      category: "General",
+      phone: "",
+      email: "",
+    });
   };
   const handleEditSupplier = async (supplier) => {
-    const companyName = prompt("Supplier company name:", supplier.name || supplier.companyName || "");
-    if (!companyName) return;
-    const contactName = prompt("Contact name:", supplier.contact || supplier.contactName || "") || supplier.contact || supplier.contactName || "";
-    const category = prompt("Category:", supplier.category || "General") || supplier.category || "General";
-    const phone = prompt("Phone number:", supplier.phone || "") || supplier.phone || "";
-    const email = prompt("Email address:", supplier.email || "") || supplier.email || "";
-    await supplierService.update(supplier.id, { companyName, contactName, category, phone, email });
-    await load();
+    setDialog({ type: "edit-supplier", supplier });
+    setDialogForm({
+      companyName: supplier.name || supplier.companyName || "",
+      contactName: supplier.contact || supplier.contactName || "",
+      category: supplier.category || "General",
+      phone: supplier.phone || "",
+      email: supplier.email || "",
+    });
+  };
+  const handleViewSupplierItems = (supplier) => {
+    setDialog({
+      type: "view-supplier-items",
+      supplier,
+      items: products.filter((product) => String(product.supplierId || "") === String(supplier.id || "")),
+    });
+  };
+  const closeDialog = () => {
+    setDialog(null);
+    setDialogForm({});
+  };
+  const submitDialog = async (event) => {
+    event.preventDefault();
+    try {
+      const companyName = (dialogForm.companyName || "").trim();
+      if (!companyName) {
+        alert("Supplier company name is required.");
+        return;
+      }
+      const payload = {
+        companyName,
+        contactName: (dialogForm.contactName || companyName).trim() || companyName,
+        category: (dialogForm.category || "General").trim() || "General",
+        phone: (dialogForm.phone || "").trim(),
+        email: (dialogForm.email || "").trim(),
+      };
+      if (dialog?.type === "add-supplier") {
+        await supplierService.create({ ...payload, status: "ACTIVE" });
+      } else if (dialog?.type === "edit-supplier") {
+        await supplierService.update(dialog.supplier.id, payload);
+      }
+      closeDialog();
+      await load();
+    } catch (err) {
+      alert(err.message || "Failed to save supplier");
+    }
   };
   return (
     <div style={{ flex: 1, overflowY: "auto", padding: "20px 24px", background: "#f9fafb" }}>
@@ -812,8 +1297,21 @@ const SuppliersPage = () => {
           <p style={{ margin: "6px 0 0", color: "#6b7280", fontSize: 13, fontWeight: 400 }}>Manage and monitor your global network of wholesale partners</p>
         </div>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          <button type="button" onClick={handleAddSupplier} style={APP_CONTROL_BUTTON_STYLE}>Add Supplier</button>
-          <button type="button" onClick={() => setEditMode((value) => !value)} style={{ ...APP_CONTROL_BUTTON_STYLE, background: editMode ? APP_ACCENT_GRADIENT : "#fff", color: editMode ? "#fff" : "#111827", border: `1px solid ${editMode ? "#6d5efc" : "#111827"}`, boxShadow: editMode ? APP_ACCENT_SHADOW : APP_CONTROL_BUTTON_STYLE.boxShadow }}>{editMode ? "Exit Edit Mode" : "Edit Mode"}</button>
+          <button onClick={handleAddSupplier} style={{ padding: "11px 16px", borderRadius: 10, border: "1px solid #111827", background: "#fff", cursor: "pointer", fontWeight: 600, color: "#111827", letterSpacing: 0, boxShadow: "0 1px 2px rgba(15, 23, 42, 0.04)" }}>Add Supplier</button>
+          <button
+            onClick={() => setEditMode((value) => !value)}
+            style={{
+              padding: "10px 14px",
+              borderRadius: 10,
+              border: "1px solid #111827",
+              background: editMode ? "#111827" : "#fff",
+              cursor: "pointer",
+              fontWeight: 600,
+              color: editMode ? "#fff" : "#111827",
+            }}
+          >
+            {editMode ? "Exit Edit Mode" : "Edit Mode"}
+          </button>
         </div>
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 14, marginBottom: 20 }}>
@@ -830,12 +1328,45 @@ const SuppliersPage = () => {
           </div>
         ))}
       </div>
+      <div style={{ background: "#fff", borderRadius: 12, border: "1px solid #e5e7eb", padding: 20, boxShadow: "0 1px 3px rgba(0, 0, 0, 0.05)", marginBottom: 20 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1.5fr repeat(2, minmax(150px, 1fr)) auto", gap: 12, alignItems: "center" }}>
+          <div style={{ position: "relative" }}>
+            <span style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "#9ca3af" }}><Icon d={icons.search} size={14} /></span>
+            <input
+              type="text"
+              placeholder="Search supplier name, contact, phone, or email"
+              value={searchQuery}
+              onChange={(event) => setSearchQuery(event.target.value)}
+              style={{ ...APP_CONTROL_INPUT_STYLE, paddingLeft: 38 }}
+            />
+          </div>
+          <select value={categoryFilter} onChange={(event) => setCategoryFilter(event.target.value)} style={APP_CONTROL_SELECT_STYLE}>
+            {supplierCategories.map((category) => (
+              <option key={category} value={category}>
+                {category === "all" ? "All Categories" : category}
+              </option>
+            ))}
+          </select>
+          <button
+            type="button"
+            onClick={() => {
+              setSearchQuery("");
+              setCategoryFilter("all");
+            }}
+            style={{ ...APP_CONTROL_BUTTON_STYLE, border: "1px solid #dbeafe", background: "linear-gradient(135deg, #eff6ff 0%, #ffffff 100%)", color: "#1d4ed8" }}
+          >
+            Reset Filters
+          </button>
+          <div />
+        </div>
+      </div>
+
       <div style={{ background: "#fff", borderRadius: 12, border: "1px solid #e5e7eb", overflow: "hidden", boxShadow: "0 1px 3px rgba(0, 0, 0, 0.05)" }}>
         <div style={{ padding: 20, borderBottom: "1px solid #e5e7eb", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <h2 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: "#111827" }}>Suppliers</h2>
-          <Badge color="gray">{rows.length} suppliers</Badge>
+          <Badge color="gray">{filteredRows.length} suppliers</Badge>
         </div>
-        <div style={{ overflowX: "auto" }}>
+        <div style={{ overflowX: "auto", maxHeight: 460, overflowY: "auto" }}>
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
             <thead>
               <tr style={{ borderBottom: "2px solid #e5e7eb", background: "#f9fafb" }}>
@@ -857,15 +1388,52 @@ const SuppliersPage = () => {
                   <td style={{ padding: "14px 16px", color: "#6b7280" }}>{s.contact}</td>
                   <td style={{ padding: "14px 16px", color: "#6b7280", fontSize: 12 }}>{s.phone}</td>
                   <td style={{ padding: "14px 16px", color: "#6b7280", fontSize: 12 }}>{s.email}</td>
-                  <td style={{ padding: "14px 16px" }}><Badge color={s.statusColor}>{s.status}</Badge></td>
                   <td style={{ padding: "14px 16px" }}>
-                    {editMode ? (
-                      <button type="button" onClick={() => handleEditSupplier(s)} style={{ padding: "6px 12px", border: "1px solid #111827", borderRadius: 6, background: "#fff", cursor: "pointer", fontSize: 12, fontWeight: 700, color: "#111827" }}>
-                        Edit Contact
-                      </button>
+                    {s.linkedItems.length ? (
+                      <Badge color={s.statusColor}>
+                        {s.linkedItems.length} linked
+                      </Badge>
                     ) : (
-                      <span style={{ fontSize: 12, color: "#9ca3af", fontWeight: 700 }}>Edit mode required</span>
+                      <span style={{ display: "inline-flex", alignItems: "center", gap: 5, color: "#b91c1c", fontSize: 11, fontWeight: 700, padding: "4px 8px", borderRadius: 999, border: "1px solid #fecaca", background: "#fef2f2" }}>
+                        <Icon d={icons.x} size={11} stroke="#b91c1c" />
+                        Unlinked
+                      </span>
                     )}
+                  </td>
+                  <td style={{ padding: "14px 16px" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                      <button
+                        type="button"
+                        onMouseDown={(event) => event.stopPropagation()}
+                        onClick={(event) => {
+                          event.preventDefault();
+                          event.stopPropagation();
+                          handleViewSupplierItems(s);
+                        }}
+                        style={{
+                          width: 28,
+                          height: 28,
+                          borderRadius: 8,
+                          border: "1px solid #dbeafe",
+                          background: "#eff6ff",
+                          color: "#1d4ed8",
+                          cursor: "pointer",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
+                        title="View linked items"
+                      >
+                        <Icon d={icons.eye} size={13} stroke="#1d4ed8" />
+                      </button>
+                      {editMode ? (
+                        <button type="button" onClick={() => handleEditSupplier(s)} style={{ padding: "6px 12px", border: "1px solid #111827", borderRadius: 6, background: "#fff", cursor: "pointer", fontSize: 12, fontWeight: 700, color: "#111827" }}>
+                          Edit Contact
+                        </button>
+                      ) : (
+                        <span style={{ fontSize: 12, color: "#9ca3af", fontWeight: 700 }}>Edit mode required</span>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -874,11 +1442,91 @@ const SuppliersPage = () => {
         </div>
         <div style={{ padding: "14px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", borderTop: "1px solid #e5e7eb", background: "#f9fafb", gap: 12, flexWrap: "wrap" }}>
           <span style={{ fontSize: 12, color: "#6b7280" }}>
-            Showing {rows.length ? (supplierPage - 1) * ITEMS_PER_PAGE + 1 : 0}-{Math.min(supplierPage * ITEMS_PER_PAGE, rows.length)} of {rows.length} suppliers
+            Showing {filteredRows.length ? (supplierPage - 1) * ITEMS_PER_PAGE + 1 : 0}-{Math.min(supplierPage * ITEMS_PER_PAGE, filteredRows.length)} of {filteredRows.length} suppliers
           </span>
           <Pagination currentPage={supplierPage} totalPages={supplierPageCount} onPageChange={setSupplierPage} />
         </div>
       </div>
+
+      <Modal
+        open={dialog?.type === "add-supplier" || dialog?.type === "edit-supplier"}
+        title={dialog?.type === "add-supplier" ? "Add Supplier" : "Edit Supplier"}
+        subtitle={dialog?.type === "add-supplier" ? "Create a new supplier profile." : dialog?.supplier?.companyName || dialog?.supplier?.name || ""}
+        onClose={closeDialog}
+        width={640}
+      >
+        <form onSubmit={submitDialog} style={{ display: "grid", gap: 14 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 14 }}>
+            <div style={{ display: "grid", gap: 6 }}>
+              <label style={{ fontSize: 13, fontWeight: 700, color: "#374151" }}>Company name</label>
+              <input value={dialogForm.companyName || ""} onChange={(event) => setDialogForm((current) => ({ ...current, companyName: event.target.value }))} style={APP_CONTROL_INPUT_STYLE} placeholder="Acme Electronics" />
+            </div>
+            <div style={{ display: "grid", gap: 6 }}>
+              <label style={{ fontSize: 13, fontWeight: 700, color: "#374151" }}>Contact name</label>
+              <input value={dialogForm.contactName || ""} onChange={(event) => setDialogForm((current) => ({ ...current, contactName: event.target.value }))} style={APP_CONTROL_INPUT_STYLE} placeholder="Primary contact" />
+            </div>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 14 }}>
+            <div style={{ display: "grid", gap: 6 }}>
+              <label style={{ fontSize: 13, fontWeight: 700, color: "#374151" }}>Category</label>
+              <input value={dialogForm.category || ""} onChange={(event) => setDialogForm((current) => ({ ...current, category: event.target.value }))} style={APP_CONTROL_INPUT_STYLE} placeholder="General" />
+            </div>
+            <div style={{ display: "grid", gap: 6 }}>
+              <label style={{ fontSize: 13, fontWeight: 700, color: "#374151" }}>Phone</label>
+              <input value={dialogForm.phone || ""} onChange={(event) => setDialogForm((current) => ({ ...current, phone: event.target.value }))} style={APP_CONTROL_INPUT_STYLE} placeholder="+1 555 123 4567" />
+            </div>
+            <div style={{ display: "grid", gap: 6 }}>
+              <label style={{ fontSize: 13, fontWeight: 700, color: "#374151" }}>Email</label>
+              <input type="email" value={dialogForm.email || ""} onChange={(event) => setDialogForm((current) => ({ ...current, email: event.target.value }))} style={APP_CONTROL_INPUT_STYLE} placeholder="supplier@example.com" />
+            </div>
+          </div>
+          <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, flexWrap: "wrap", paddingTop: 4 }}>
+            <button type="button" onClick={closeDialog} style={APP_CONTROL_BUTTON_STYLE}>
+              Cancel
+            </button>
+            <button type="submit" style={{ ...APP_CONTROL_BUTTON_STYLE, border: "1px solid #6d5efc", background: APP_ACCENT_GRADIENT, color: "#fff", boxShadow: APP_ACCENT_SHADOW }}>
+              {dialog?.type === "add-supplier" ? "Create Supplier" : "Save Changes"}
+            </button>
+          </div>
+        </form>
+      </Modal>
+
+      <Modal
+        open={dialog?.type === "view-supplier-items"}
+        title={dialog?.supplier?.companyName || dialog?.supplier?.name || "Linked Items"}
+        subtitle="Items currently assigned to this supplier."
+        onClose={closeDialog}
+        width={720}
+      >
+        <div style={{ display: "grid", gap: 12 }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+            <Badge color={dialog?.items?.length ? "green" : "red"}>
+              {dialog?.items?.length || 0} linked items
+            </Badge>
+            <span style={{ fontSize: 12, color: "#6b7280" }}>{dialog?.supplier?.email || dialog?.supplier?.phone || ""}</span>
+          </div>
+          <div style={{ border: "1px solid #e5e7eb", borderRadius: 14, overflow: "hidden" }}>
+            {dialog?.items?.length ? dialog.items.map((item, index) => {
+              const stockLabel = (item.quantity || 0) === 0 ? "Out of stock" : (item.quantity || 0) < 20 ? "Low stock" : "In stock";
+              const stockColor = stockLabel === "Out of stock" ? "red" : stockLabel === "Low stock" ? "yellow" : "green";
+              return (
+                <div key={item.id} style={{ padding: "12px 14px", background: index % 2 === 0 ? "#fff" : "#f9fafb", borderBottom: index === dialog.items.length - 1 ? "none" : "1px solid #eef2f7", display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center" }}>
+                  <div>
+                    <div style={{ fontWeight: 700, color: "#111827" }}>{item.name}</div>
+                    <div style={{ fontSize: 12, color: "#6b7280", marginTop: 2 }}>{item.sku || "No SKU"} • {item.category || "General"}</div>
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <span style={{ fontSize: 12, color: "#6b7280", fontWeight: 700 }}>{Number(item.quantity || 0).toLocaleString()} units</span>
+                    <Badge color={stockColor}>{stockLabel}</Badge>
+                  </div>
+                </div>
+              );
+            }) : (
+              <div style={{ padding: 18, color: "#6b7280", fontSize: 13 }}>No linked items yet.</div>
+            )}
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 };
@@ -889,11 +1537,11 @@ const SalesPage = () => {
   const [statusFilter, setStatusFilter] = useState("all");
   const [salesPage, setSalesPage] = useState(1);
   const rows = snapshot?.salesRows || [
-    { id: "#TRX-82910", avatar: "AS", name: "Aarav Shrestha", date: "Oct 24, 2023 • 14:22", amount: "$1,240.00", status: "Completed", statusColor: "green" },
-    { id: "#TRX-82909", avatar: "PK", name: "Priya Koirala", date: "Oct 24, 2023 • 12:45", amount: "$45.90", status: "Pending", statusColor: "yellow" },
-    { id: "#TRX-82908", avatar: "NR", name: "Nischal Rai", date: "Oct 23, 2023 • 18:10", amount: "$3,102.50", status: "Completed", statusColor: "green" },
-    { id: "#TRX-82907", avatar: "MG", name: "Mira Gautam", date: "Oct 23, 2023 • 15:30", amount: "$12.00", status: "Refunded", statusColor: "red" },
-    { id: "#TRX-82906", avatar: "ST", name: "Sandeep Thapa", date: "Oct 23, 2023 • 09:12", amount: "$540.00", status: "Completed", statusColor: "green" },
+    { id: "#TRX-82910", avatar: "AS", name: "Aarav Shrestha", date: "Oct 24, 2023 • 14:22", amount: "Rs. 1,240.00", status: "Completed", statusColor: "green" },
+    { id: "#TRX-82909", avatar: "PK", name: "Priya Koirala", date: "Oct 24, 2023 • 12:45", amount: "Rs. 45.90", status: "Pending", statusColor: "yellow" },
+    { id: "#TRX-82908", avatar: "NR", name: "Nischal Rai", date: "Oct 23, 2023 • 18:10", amount: "Rs. 3,102.50", status: "Completed", statusColor: "green" },
+    { id: "#TRX-82907", avatar: "MG", name: "Mira Gautam", date: "Oct 23, 2023 • 15:30", amount: "Rs. 12.00", status: "Refunded", statusColor: "red" },
+    { id: "#TRX-82906", avatar: "ST", name: "Sandeep Thapa", date: "Oct 23, 2023 • 09:12", amount: "Rs. 540.00", status: "Completed", statusColor: "green" },
   ];
   const filteredRows = rows.filter((row) => {
     const query = searchQuery.trim().toLowerCase();
@@ -925,9 +1573,9 @@ const SalesPage = () => {
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 14, marginBottom: 20 }}>
         {[
-          { label: "Total Revenue", value: `${Number(snapshot?.totalRevenue ?? 124592).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, sub: "+12.5%", subColor: "#10b981" },
+          { label: "Total Revenue", value: formatRs(snapshot?.totalRevenue ?? 124592), sub: "+12.5%", subColor: "#10b981" },
           { label: "Total Orders", value: Number(snapshot?.totalOrders ?? 1284).toLocaleString(), sub: "Synced from orders", subColor: "#10b981" },
-          { label: "Avg. Order Value", value: `${Number(snapshot?.avgOrderValue ?? 97.03).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, sub: "Current average", subColor: "#2563eb" },
+          { label: "Avg. Order Value", value: formatRs(snapshot?.avgOrderValue ?? 97.03), sub: "Current average", subColor: "#2563eb" },
           { label: "Return Rate", value: "0.42%", sub: "Stable", subColor: "#6b7280" },
         ].map((s, i) => (
           <div key={i} style={{ background: "linear-gradient(135deg, #fff 0%, #f9fafb 100%)", border: "1px solid #e5e7eb", borderRadius: 12, padding: "16px 18px", transition: "all 0.3s ease", boxShadow: "0 1px 3px rgba(0, 0, 0, 0.05)" }} onMouseEnter={(e) => { e.currentTarget.style.boxShadow = "0 4px 12px rgba(0, 0, 0, 0.08)"; e.currentTarget.style.transform = "translateY(-2px)"; }} onMouseLeave={(e) => { e.currentTarget.style.boxShadow = "0 1px 3px rgba(0, 0, 0, 0.05)"; e.currentTarget.style.transform = "translateY(0)"; }}>
@@ -1021,40 +1669,35 @@ const SalesPage = () => {
 const ReportsPage = () => {
   const snapshot = useAdminSnapshot();
   const [reportQuery, setReportQuery] = useState("");
-  const [reportCategory, setReportCategory] = useState("all");
-  const [reportStatus, setReportStatus] = useState("all");
   const [reportPage, setReportPage] = useState(1);
-  const categories = (snapshot?.categories || ["Electronics", "Home & Garden", "Automotive", "Office Supplies"])
-    .slice(0, 4)
-    .map((name, index) => ({
-      name,
-      value: index === 0 ? "$120.4k" : index === 1 ? "$94.2k" : index === 2 ? "$72.1k" : "$48.8k",
-      pct: [100, 78, 60, 40][index] || 25,
-    }));
-  const barData = [
-    { label: "ALPHA", h: 80 }, { label: "BETA", h: 100 }, { label: "GAMMA", h: 55 }, { label: "DELTA", h: 70 },
-  ];
-  const rows = snapshot?.reportRows || [
-    { sku: "EL-TV-85-001", sub: 'Quantum 85" Smart TV', cat: "Electronics", open: 142, sold: 84, soldColor: "#2563eb", status: "In Stock", statusColor: "green", val: "$124,500.00" },
-    { sku: "HG-CHR-ERGO-9", sub: "Executive Ergonomic Chair", cat: "Home & Office", open: 85, sold: 72, soldColor: "#2563eb", status: "Low Stock", statusColor: "yellow", val: "$21,600.00" },
+  const categories = (snapshot?.categoryBreakdown?.length
+    ? snapshot.categoryBreakdown
+    : (snapshot?.categories || ["Electronics", "Home & Garden", "Automotive", "Office Supplies"]).map((name, index) => ({
+        name,
+        value: index === 0 ? "Rs. 120.4k" : index === 1 ? "Rs. 94.2k" : index === 2 ? "Rs. 72.1k" : "Rs. 48.8k",
+        pct: [100, 78, 60, 40][index] || 25,
+      }))).slice(0, 4);
+  const rows = snapshot?.autoRestockRows || [
+    { id: "AR-1001", sku: "IP-4402-WHT", product: "Wireless Keyboard Pro", supplier: "Sujal Supplies", date: "May 12, 2024", quantity: 180, currentStock: 18, reason: "Auto restock triggered: critical stock level", status: "Pending", statusColor: "yellow" },
+    { id: "AR-1002", sku: "IP-1105-GRY", product: "Smart Lighting Kit", supplier: "Govind Hardware", date: "May 11, 2024", quantity: 100, currentStock: 0, reason: "Auto restock triggered: out of stock", status: "Pending", statusColor: "yellow" },
   ];
   const filteredRows = rows.filter((row) => {
     const query = reportQuery.trim().toLowerCase();
-    const matchesQuery =
+    return (
       !query ||
+      String(row.id || "").toLowerCase().includes(query) ||
       String(row.sku || "").toLowerCase().includes(query) ||
-      String(row.sub || "").toLowerCase().includes(query) ||
-      String(row.cat || "").toLowerCase().includes(query);
-    const matchesCategory = reportCategory === "all" || String(row.cat || "").toLowerCase() === reportCategory.toLowerCase();
-    const matchesStatus = reportStatus === "all" || String(row.status || "").toLowerCase() === reportStatus.toLowerCase();
-    return matchesQuery && matchesCategory && matchesStatus;
+      String(row.product || "").toLowerCase().includes(query) ||
+      String(row.supplier || "").toLowerCase().includes(query) ||
+      String(row.reason || "").toLowerCase().includes(query)
+    );
   });
   const reportPageCount = Math.max(1, Math.ceil(filteredRows.length / ITEMS_PER_PAGE));
   const visibleReportRows = filteredRows.slice((reportPage - 1) * ITEMS_PER_PAGE, reportPage * ITEMS_PER_PAGE);
 
   useEffect(() => {
     setReportPage(1);
-  }, [reportQuery, reportCategory, reportStatus]);
+  }, [reportQuery]);
 
   useEffect(() => {
     setReportPage((current) => Math.min(current, reportPageCount));
@@ -1069,9 +1712,9 @@ const ReportsPage = () => {
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 14, marginBottom: 20 }}>
         {[
-          { label: "Total Sales Revenue", value: `${Number(snapshot?.totalRevenue ?? 284592).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, sub: "+12.4%", subColor: "#10b981" },
+          { label: "Total Sales Revenue", value: formatRs(snapshot?.totalRevenue ?? 284592), sub: "+12.4%", subColor: "#10b981" },
           { label: "Stock Turnover Rate", value: "4.8x / Year", sub: "-3.2%", subColor: "#ef4444" },
-          { label: "Avg. Lead Time", value: "5.2 Days", sub: "Optimal", subColor: "#2563eb" },
+          { label: "Auto Restock Requests", value: Number(snapshot?.autoRestockRows?.length ?? 0).toLocaleString(), sub: "System generated", subColor: "#2563eb" },
           { label: "Low Stock Alerts", value: `${Number(snapshot?.lowStockCount ?? 14).toLocaleString()} SKUs`, sub: null, alert: true },
         ].map((s, i) => (
           <div key={i} style={{ background: s.alert ? "linear-gradient(135deg, #fff5f5 0%, #fffbf9 100%)" : "linear-gradient(135deg, #fff 0%, #f9fafb 100%)", border: `1px solid ${s.alert ? "#fee2e2" : "#e5e7eb"}`, borderRadius: 12, padding: "16px 18px", transition: "all 0.3s ease", boxShadow: "0 1px 3px rgba(0, 0, 0, 0.05)" }} onMouseEnter={(e) => { e.currentTarget.style.boxShadow = "0 4px 12px rgba(0, 0, 0, 0.08)"; e.currentTarget.style.transform = "translateY(-2px)"; }} onMouseLeave={(e) => { e.currentTarget.style.boxShadow = "0 1px 3px rgba(0, 0, 0, 0.05)"; e.currentTarget.style.transform = "translateY(0)"; }}>
@@ -1083,7 +1726,7 @@ const ReportsPage = () => {
           </div>
         ))}
       </div>
-      <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 16, marginBottom: 20 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 16, marginBottom: 20 }}>
         <div style={{ background: "#fff", borderRadius: 12, border: "1px solid #e5e7eb", padding: 20, boxShadow: "0 1px 3px rgba(0, 0, 0, 0.05)" }}>
           <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 18 }}>
             <h2 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: "#111827" }}>Top Selling Categories</h2>
@@ -1100,69 +1743,19 @@ const ReportsPage = () => {
             </div>
           ))}
         </div>
-        <div style={{ background: "#fff", borderRadius: 12, border: "1px solid #e5e7eb", padding: 20, boxShadow: "0 1px 3px rgba(0, 0, 0, 0.05)" }}>
-          <h2 style={{ margin: "0 0 16px", fontSize: 15, fontWeight: 700, color: "#111827" }}>Supplier Lead Times</h2>
-          <div style={{ display: "flex", alignItems: "flex-end", gap: 10, height: 140, marginBottom: 16 }}>
-            {barData.map((b, i) => (
-              <div key={i} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
-                <div style={{ width: "100%", height: `${b.h}%`, background: i === 2 ? "linear-gradient(180deg, #c7d7fd 0%, #a5b4fc 100%)" : "linear-gradient(180deg, #2563eb 0%, #1d4ed8 100%)", borderRadius: "6px 6px 0 0", transition: "all 0.2s ease" }} onMouseEnter={(e) => { e.currentTarget.style.opacity = "0.8"; }} onMouseLeave={(e) => { e.currentTarget.style.opacity = "1"; }} />
-                <span style={{ fontSize: 11, color: "#9ca3af", fontWeight: 600 }}>{b.label}</span>
-              </div>
-            ))}
-          </div>
-          <div style={{ borderTop: "1px solid #e5e7eb", paddingTop: 12, display: "flex", justifyContent: "space-between", fontSize: 13 }}>
-            <span style={{ color: "#6b7280" }}>Industry Benchmark</span>
-            <span style={{ fontWeight: 600, color: "#111827" }}>6.0 Days</span>
-          </div>
-        </div>
       </div>
       <div style={{ background: "#fff", borderRadius: 12, border: "1px solid #e5e7eb", padding: 20, boxShadow: "0 1px 3px rgba(0, 0, 0, 0.05)", marginBottom: 20 }}>
-        <div style={{ display: "grid", gridTemplateColumns: "1.5fr repeat(2, minmax(150px, 1fr))", gap: 12, alignItems: "center" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1.5fr auto", gap: 12, alignItems: "center" }}>
           <div style={{ position: "relative" }}>
             <span style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "#9ca3af" }}><Icon d={icons.search} size={14} /></span>
             <input
               type="text"
-              placeholder="Search report SKU, category, or product"
+              placeholder="Search auto restock request"
               value={reportQuery}
               onChange={(event) => setReportQuery(event.target.value)}
               style={{ ...APP_CONTROL_INPUT_STYLE, paddingLeft: 38 }}
             />
           </div>
-          <select
-            value={reportCategory}
-            onChange={(event) => setReportCategory(event.target.value)}
-            style={APP_CONTROL_SELECT_STYLE}
-          >
-            <option value="all">All Categories</option>
-            {categories.map((item) => (
-              <option key={item.name} value={item.name}>
-                {item.name}
-              </option>
-            ))}
-          </select>
-          <select
-            value={reportStatus}
-            onChange={(event) => setReportStatus(event.target.value)}
-            style={APP_CONTROL_SELECT_STYLE}
-          >
-            <option value="all">All Status</option>
-            <option value="in stock">In Stock</option>
-            <option value="low stock">Low Stock</option>
-            <option value="out of stock">Out of Stock</option>
-          </select>
-        </div>
-        <div style={{ marginTop: 12, display: "flex", justifyContent: "flex-end" }}>
-          <button
-            type="button"
-            onClick={() => {
-              setReportQuery("");
-              setReportCategory("all");
-              setReportStatus("all");
-            }}
-            style={{ ...APP_CONTROL_BUTTON_STYLE, border: "1px solid #dbeafe", background: "linear-gradient(135deg, #eff6ff 0%, #ffffff 100%)", color: "#1d4ed8" }}
-          >
-            Reset Filters
-          </button>
         </div>
       </div>
       <div style={{ background: "#fff", borderRadius: 12, border: "1px solid #e5e7eb", overflow: "hidden", boxShadow: "0 1px 3px rgba(0, 0, 0, 0.05)" }}>
@@ -1174,23 +1767,24 @@ const ReportsPage = () => {
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
             <thead>
               <tr style={{ borderBottom: "2px solid #e5e7eb", background: "#f9fafb" }}>
-                {["Product SKU", "Category", "Opening Stock", "Units Sold", "Reorder Status", "Valuation"].map(h => (
+                {["Request ID", "Product", "Date", "Supplier", "Quantity", "Reason", "Status"].map(h => (
                   <th key={h} style={{ textAlign: "left", padding: "12px 16px", fontSize: 11, fontWeight: 700, color: "#9ca3af", letterSpacing: 0.5, textTransform: "uppercase" }}>{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {visibleReportRows.map((r, idx) => (
-                <tr key={r.sku} style={{ borderBottom: "1px solid #e5e7eb", transition: "all 0.2s ease", background: idx % 2 === 0 ? "#f9fafb" : "#fff" }} onMouseEnter={(e) => { e.currentTarget.style.background = "#f3f4f6"; }} onMouseLeave={(e) => { e.currentTarget.style.background = idx % 2 === 0 ? "#f9fafb" : "#fff"; }}>
+                <tr key={r.id} style={{ borderBottom: "1px solid #e5e7eb", transition: "all 0.2s ease", background: idx % 2 === 0 ? "#f9fafb" : "#fff" }} onMouseEnter={(e) => { e.currentTarget.style.background = "#f3f4f6"; }} onMouseLeave={(e) => { e.currentTarget.style.background = idx % 2 === 0 ? "#f9fafb" : "#fff"; }}>
+                  <td style={{ padding: "14px 16px", fontWeight: 700, color: "#2563eb" }}>{r.id}</td>
                   <td style={{ padding: "14px 16px" }}>
-                    <div style={{ fontWeight: 700, color: "#111827" }}>{r.sku}</div>
-                    <div style={{ fontSize: 12, color: "#9ca3af" }}>{r.sub}</div>
+                    <div style={{ fontWeight: 700, color: "#111827" }}>{r.product}</div>
+                    <div style={{ fontSize: 12, color: "#9ca3af" }}>{r.sku}</div>
                   </td>
-                  <td style={{ padding: "14px 16px", color: "#6b7280" }}>{r.cat}</td>
-                  <td style={{ padding: "14px 16px", fontWeight: 600, color: "#111827" }}>{r.open}</td>
-                  <td style={{ padding: "14px 16px", fontWeight: 600, color: r.soldColor, fontSize: 15 }}>{r.sold}</td>
+                  <td style={{ padding: "14px 16px", color: "#6b7280" }}>{r.date}</td>
+                  <td style={{ padding: "14px 16px", color: "#6b7280" }}>{r.supplier}</td>
+                  <td style={{ padding: "14px 16px", fontWeight: 600, color: "#111827" }}>{Number(r.quantity || 0).toLocaleString()}</td>
+                  <td style={{ padding: "14px 16px", color: "#6b7280" }}>{r.reason}</td>
                   <td style={{ padding: "14px 16px" }}><Badge color={r.statusColor}>{r.status}</Badge></td>
-                  <td style={{ padding: "14px 16px", fontWeight: 700, color: "#111827" }}>{r.val}</td>
                 </tr>
               ))}
             </tbody>
@@ -1198,7 +1792,7 @@ const ReportsPage = () => {
         </div>
         <div style={{ padding: "14px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", borderTop: "1px solid #e5e7eb", background: "#f9fafb", gap: 12, flexWrap: "wrap" }}>
           <span style={{ fontSize: 12, color: "#6b7280" }}>
-            Showing {filteredRows.length ? (reportPage - 1) * ITEMS_PER_PAGE + 1 : 0}-{Math.min(reportPage * ITEMS_PER_PAGE, filteredRows.length)} of {filteredRows.length} rows
+            Showing {filteredRows.length ? (reportPage - 1) * ITEMS_PER_PAGE + 1 : 0}-{Math.min(reportPage * ITEMS_PER_PAGE, filteredRows.length)} of {filteredRows.length} auto restock requests
           </span>
           <Pagination currentPage={reportPage} totalPages={reportPageCount} onPageChange={setReportPage} />
         </div>
@@ -1218,8 +1812,8 @@ const PurchaseHistoryPage = () => (
           <tr style={{ textAlign: "left", color: "#9ca3af" }}><th style={{ padding: 8 }}>Order</th><th>Item</th><th>Date</th><th>Amount</th></tr>
         </thead>
         <tbody>
-          <tr><td style={{ padding: 8 }}>#ORD-1001</td><td>Wireless Keyboard Pro</td><td>May 12, 2024</td><td style={{ fontWeight: 700 }}>$129.00</td></tr>
-          <tr style={{ background: "#f9fafb" }}><td style={{ padding: 8 }}>#ORD-1002</td><td>Ergonomic Office Chair</td><td>May 09, 2024</td><td style={{ fontWeight: 700 }}>$499.98</td></tr>
+          <tr><td style={{ padding: 8 }}>#ORD-1001</td><td>Wireless Keyboard Pro</td><td>May 12, 2024</td><td style={{ fontWeight: 700 }}>Rs. 129.00</td></tr>
+          <tr style={{ background: "#f9fafb" }}><td style={{ padding: 8 }}>#ORD-1002</td><td>Ergonomic Office Chair</td><td>May 09, 2024</td><td style={{ fontWeight: 700 }}>Rs. 499.98</td></tr>
         </tbody>
       </table>
     </div>
@@ -1341,14 +1935,14 @@ const SupplyHistoryPage = () => (
             <td style={{ padding: 8 }}>RS-9000</td>
             <td style={{ padding: 8 }}>Ergonomic Office Chair</td>
             <td style={{ padding: 8 }}>Apr 08, 2024</td>
-            <td style={{ padding: 8, fontWeight: 700 }}>$12,500.00</td>
+            <td style={{ padding: 8, fontWeight: 700 }}>Rs. 12,500.00</td>
             <td style={{ padding: 8 }}><Badge color="green">Completed</Badge></td>
           </tr>
           <tr style={{ background: "#f9fafb" }}>
             <td style={{ padding: 8 }}>RS-8999</td>
             <td style={{ padding: 8 }}>Smart Lighting Kit</td>
             <td style={{ padding: 8 }}>Mar 12, 2024</td>
-            <td style={{ padding: 8, fontWeight: 700 }}>$8,900.00</td>
+            <td style={{ padding: 8, fontWeight: 700 }}>Rs. 8,900.00</td>
             <td style={{ padding: 8 }}><Badge color="green">Completed</Badge></td>
           </tr>
         </tbody>
@@ -1357,13 +1951,39 @@ const SupplyHistoryPage = () => (
   </div>
 );
 
-const ProfilePage = ({ role }) => (
+const ProfilePage = ({ role, revenueModeEnabled, onToggleRevenueMode }) => (
   <div style={{ flex: 1, overflowY: "auto", padding: "20px 24px", background: "#f9fafb" }}>
     <h1 style={{ fontSize: 22, fontWeight: 700, lineHeight: 1.08, letterSpacing: -0.2 }}>Profile</h1>
     <p style={{ color: "#6b7280" }}>Basic account information for the current user.</p>
-    <div style={{ marginTop: 12, background: "#fff", borderRadius: 12, padding: 16, border: "1px solid #e5e7eb" }}>
-      <div style={{ fontWeight: 700 }}>Inventory Pro</div>
-      <div style={{ color: "#6b7280", marginTop: 6 }}>Role: {role || "Guest"}</div>
+    <div style={{ marginTop: 12, background: "#fff", borderRadius: 12, padding: 16, border: "1px solid #e5e7eb", display: "grid", gap: 12 }}>
+      <div>
+        <div style={{ fontWeight: 700 }}>Inventory Pro</div>
+        <div style={{ color: "#6b7280", marginTop: 6 }}>Role: {role || "Guest"}</div>
+      </div>
+      <div style={{ padding: 14, borderRadius: 12, background: revenueModeEnabled ? "linear-gradient(135deg, #eff6ff 0%, #ffffff 100%)" : "#f9fafb", border: `1px solid ${revenueModeEnabled ? "#bfdbfe" : "#e5e7eb"}`, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+        <div>
+          <div style={{ fontSize: 13, fontWeight: 700, color: "#111827" }}>Fake Revenue Mode</div>
+          <div style={{ fontSize: 12, color: "#6b7280", marginTop: 4 }}>
+            {revenueModeEnabled ? "Using the generated 7-day revenue dataset across the site." : "Using live revenue totals from the stored orders and transactions."}
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={onToggleRevenueMode}
+          style={{
+            padding: "10px 14px",
+            borderRadius: 999,
+            border: `1px solid ${revenueModeEnabled ? "#2563eb" : "#dbe2ea"}`,
+            background: revenueModeEnabled ? APP_ACCENT_GRADIENT : "#fff",
+            color: revenueModeEnabled ? "#fff" : "#111827",
+            fontWeight: 700,
+            cursor: "pointer",
+            boxShadow: revenueModeEnabled ? APP_ACCENT_SHADOW : "0 1px 3px rgba(15, 23, 42, 0.06)",
+          }}
+        >
+          {revenueModeEnabled ? "Enabled" : "Disabled"}
+        </button>
+      </div>
     </div>
   </div>
 );
@@ -1373,12 +1993,12 @@ const ProfilePage = ({ role }) => (
 // ─── App ──────────────────────────────────────────────────────────────────────
 const allowedPages = {
   admin: ["dashboard", "products", "suppliers", "sales", "reports", "profile"],
-  customer: ["customer", "products", "purchase_history", "recent_purchases", "profile"],
+  customer: ["products", "purchase_history", "profile"],
   supplier: ["supplier", "supplied_products", "restock_requests", "supply_history", "profile"],
 };
 
 const getDefaultPage = (role) => {
-  if (role === "customer") return "customer";
+  if (role === "customer") return "products";
   if (role === "supplier") return "supplier";
   return "dashboard";
 };
@@ -1396,6 +2016,7 @@ export default function App() {
   const [page, setPage] = useState("login");
   const [role, setRole] = useState(null);
   const [rememberSession, setRememberSession] = useState(false);
+  const [revenueModeEnabled, setRevenueModeEnabled] = useState(() => dashboardService.getRevenueMode());
 
   const handleLogin = (roleName, startPage, remember) => {
     setRole(roleName);
@@ -1439,6 +2060,22 @@ export default function App() {
     }
   }, [role, page, rememberSession]);
 
+  useEffect(() => {
+    const syncRevenueMode = () => setRevenueModeEnabled(dashboardService.getRevenueMode());
+    window.addEventListener("inventory-revenue-mode-changed", syncRevenueMode);
+    window.addEventListener("inventory-db-changed", syncRevenueMode);
+    return () => {
+      window.removeEventListener("inventory-revenue-mode-changed", syncRevenueMode);
+      window.removeEventListener("inventory-db-changed", syncRevenueMode);
+    };
+  }, []);
+
+  const handleToggleRevenueMode = () => {
+    const next = !revenueModeEnabled;
+    setRevenueModeEnabled(next);
+    dashboardService.setRevenueMode(next);
+  };
+
   const setPageAuthorized = (target) => {
     if (!role) {
       if (target === "login") setPage(target);
@@ -1457,14 +2094,12 @@ export default function App() {
 
   const pageTitles = {
     dashboard: "Dashboard",
-    customer: "Customer",
     supplier: "Supplier",
     products: "Products",
     suppliers: "Suppliers",
     sales: "Sales",
     reports: "Reports",
     purchase_history: "Purchase History",
-    recent_purchases: "Recent Purchases",
     supplied_products: "Supplied Products",
     restock_requests: "Restock Requests",
     supply_history: "Supply History",
@@ -1493,7 +2128,11 @@ export default function App() {
       <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
         <TopBar title={currentTitle} onExport={handleExport} onRefresh={handleRefresh} />
         {role === "customer" ? (
-          <CustomerDashboard page={page} />
+          <CustomerDashboard
+            page={page}
+            revenueModeEnabled={revenueModeEnabled}
+            onToggleRevenueMode={handleToggleRevenueMode}
+          />
         ) : role === "supplier" ? (
           <SupplierDashboard page={page} />
         ) : (
@@ -1503,7 +2142,7 @@ export default function App() {
             {page === "suppliers" && <SuppliersPage />}
             {page === "sales" && <SalesPage />}
             {page === "reports" && <ReportsPage />}
-            {page === "profile" && <ProfilePage role={role} />}
+            {page === "profile" && <ProfilePage role={role} revenueModeEnabled={revenueModeEnabled} onToggleRevenueMode={handleToggleRevenueMode} />}
           </>
         )}
       </div>

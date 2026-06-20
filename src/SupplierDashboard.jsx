@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   Icon,
   Badge,
@@ -72,23 +72,16 @@ const PageHeader = ({ title, subtitle, actions }) => (
   </div>
 );
 
-const ControlChip = ({ icon, label, accent = false }) => (
+const ControlChip = ({ icon, label, accent = false, onClick, active = false }) => (
   <button
     type="button"
+    onClick={onClick}
     style={{
-      display: "inline-flex",
-      alignItems: "center",
-      gap: 8,
-      padding: "11px 16px",
-      borderRadius: 12,
-      border: "1px solid #111827",
-      background: accent ? "#111827" : "#fff",
-      color: accent ? "#fff" : "#111827",
-      fontSize: 13,
-      fontWeight: 600,
-      letterSpacing: 0,
-      cursor: "pointer",
-      boxShadow: "0 1px 3px rgba(0, 0, 0, 0.04)",
+      ...APP_CONTROL_BUTTON_STYLE,
+      background: accent ? "#111827" : active ? "linear-gradient(135deg, #eff6ff 0%, #ffffff 100%)" : "#fff",
+      color: accent ? "#fff" : active ? "#1d4ed8" : "#111827",
+      borderColor: accent ? "#111827" : active ? "#bfdbfe" : "#dbe2ea",
+      boxShadow: accent ? "0 10px 20px rgba(15, 23, 42, 0.12)" : active ? "0 8px 18px rgba(37, 99, 235, 0.10)" : APP_CONTROL_BUTTON_STYLE.boxShadow,
     }}
   >
     <Icon d={icon} size={14} />
@@ -146,8 +139,11 @@ const SupplierDashboard = ({ page = "supplier" }) => {
   const [requestQuery, setRequestQuery] = useState("");
   const [requestPriority, setRequestPriority] = useState("all");
   const [requestStatus, setRequestStatus] = useState("all");
+  const [requestSort, setRequestSort] = useState("priority");
+  const [requestRange, setRequestRange] = useState("all");
   const [automatedPage, setAutomatedPage] = useState(1);
   const [manualPage, setManualPage] = useState(1);
+  const requestSearchRef = useRef(null);
 
   useEffect(() => {
     let mounted = true;
@@ -230,11 +226,31 @@ const SupplierDashboard = ({ page = "supplier" }) => {
       requestStatus === "all" ||
       (requestStatus === "open" && !requestState.includes("complete") && !requestState.includes("accept")) ||
       (requestStatus === "completed" && (requestState.includes("complete") || requestState.includes("accept")));
-    return matchesQuery && matchesPriority && matchesStatus;
+    const requestDate = Date.parse(request.createdAt || Date.now());
+    const withinRange =
+      requestRange === "all" ||
+      (!Number.isNaN(requestDate) &&
+        ((requestRange === "30" && (Date.now() - requestDate) / (1000 * 60 * 60 * 24) <= 30) ||
+          (requestRange === "90" && (Date.now() - requestDate) / (1000 * 60 * 60 * 24) <= 90) ||
+          (requestRange === "180" && (Date.now() - requestDate) / (1000 * 60 * 60 * 24) <= 180)));
+    return matchesQuery && matchesPriority && matchesStatus && withinRange;
   };
 
-  const filteredAutomated = automated.filter(matchesRequestFilters);
-  const filteredManual = manual.filter(matchesRequestFilters);
+  const sortRequests = (items) => {
+    const priorityWeight = { Critical: 0, High: 1, Medium: 2, Low: 3 };
+    return [...items].sort((a, b) => {
+      if (requestSort === "date") {
+        return Number(b.createdAt || 0) - Number(a.createdAt || 0);
+      }
+      const aPriority = priorityWeight[a.priority] ?? 99;
+      const bPriority = priorityWeight[b.priority] ?? 99;
+      if (aPriority !== bPriority) return aPriority - bPriority;
+      return Number(b.createdAt || 0) - Number(a.createdAt || 0);
+    });
+  };
+
+  const filteredAutomated = sortRequests(automated.filter(matchesRequestFilters));
+  const filteredManual = sortRequests(manual.filter(matchesRequestFilters));
   const automatedPageCount = Math.max(1, Math.ceil(filteredAutomated.length / ITEMS_PER_PAGE));
   const manualPageCount = Math.max(1, Math.ceil(filteredManual.length / ITEMS_PER_PAGE));
   const visibleAutomated = filteredAutomated.slice((automatedPage - 1) * ITEMS_PER_PAGE, automatedPage * ITEMS_PER_PAGE);
@@ -253,12 +269,20 @@ const SupplierDashboard = ({ page = "supplier" }) => {
     setManualPage((current) => Math.min(current, manualPageCount));
   }, [manualPageCount]);
 
+  const cycleRequestSort = () => {
+    setRequestSort((current) => (current === "priority" ? "date" : "priority"));
+  };
+
+  const cycleRequestRange = () => {
+    setRequestRange((current) => (current === "all" ? "30" : current === "30" ? "90" : current === "90" ? "180" : "all"));
+  };
+
   const renderDashboard = () => (
     <div>
       <PageHeader
         title="Supplier Dashboard"
         actions={[
-          <ControlChip key="review" icon={icons.alert} label="Priority Review" accent />,
+          <ControlChip key="review" icon={icons.alert} label="Priority Review" accent active={requestSort === "priority"} onClick={cycleRequestSort} />,
           <ControlChip key="new" icon={icons.receipt} label="New Request" />,
         ]}
       />
@@ -312,8 +336,8 @@ const SupplierDashboard = ({ page = "supplier" }) => {
       <PageHeader
         title={title}
         actions={[
-          <ControlChip key="priority" icon={icons.sort} label="Priority Sort" accent />,
-          <ControlChip key="calendar" icon={icons.calendar} label="Date Range" />,
+          <ControlChip key="priority" icon={icons.sort} label={requestSort === "priority" ? "Priority Sort" : "Date Sort"} active={requestSort === "priority"} onClick={cycleRequestSort} />,
+          <ControlChip key="calendar" icon={icons.calendar} label={requestRange === "all" ? "Date Range" : `Last ${requestRange} Days`} active={requestRange !== "all"} onClick={cycleRequestRange} />,
         ]}
       />
 
@@ -489,8 +513,9 @@ const SupplierDashboard = ({ page = "supplier" }) => {
               placeholder="Search request ID, product, or reason"
               value={requestQuery}
               onChange={(event) => setRequestQuery(event.target.value)}
-            style={{ ...APP_CONTROL_INPUT_STYLE, paddingLeft: 38 }}
-          />
+              ref={requestSearchRef}
+              style={{ ...APP_CONTROL_INPUT_STYLE, paddingLeft: 38 }}
+            />
           </div>
           <select
             value={requestPriority}
@@ -514,10 +539,18 @@ const SupplierDashboard = ({ page = "supplier" }) => {
           </select>
           <button
             type="button"
+            onClick={cycleRequestRange}
+            style={APP_CONTROL_BUTTON_STYLE}
+          >
+            {requestRange === "all" ? "Last 90 Days" : `Last ${requestRange} Days`}
+          </button>
+          <button
+            type="button"
             onClick={() => {
               setRequestQuery("");
               setRequestPriority("all");
               setRequestStatus("all");
+              setRequestRange("all");
             }}
             style={APP_CONTROL_BUTTON_STYLE}
           >

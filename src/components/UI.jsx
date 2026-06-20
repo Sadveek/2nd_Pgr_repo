@@ -33,16 +33,22 @@ export const APP_CONTROL_SELECT_STYLE = {
   paddingRight: 36,
 };
 export const APP_CONTROL_BUTTON_STYLE = {
-  padding: "12px 14px",
-  borderRadius: 12,
-  border: "1px solid #111827",
+  padding: "11px 16px",
+  borderRadius: 999,
+  border: "1px solid #dbe2ea",
   background: "#fff",
   color: "#111827",
   fontFamily: APP_FONT_STACK,
-  fontSize: 13,
+  fontSize: 14,
   fontWeight: 600,
   cursor: "pointer",
-  boxShadow: "0 1px 2px rgba(15, 23, 42, 0.04)",
+  boxShadow: "0 1px 3px rgba(15, 23, 42, 0.06)",
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  gap: 8,
+  whiteSpace: "nowrap",
+  transition: "transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease",
 };
 
 export const Icon = ({ d, size = 18, stroke = "currentColor", fill = "none", strokeWidth = 1.8 }) => (
@@ -119,10 +125,8 @@ const sidebarNav = {
     { key: "profile", label: "Profile", icon: sidebarIcons.profile },
   ],
   customer: [
-    { key: "customer", label: "Customer Home", icon: sidebarIcons.customer },
     { key: "products", label: "Products", icon: sidebarIcons.products },
     { key: "purchase_history", label: "Purchase History", icon: sidebarIcons.purchase_history },
-    { key: "recent_purchases", label: "Recent Purchases", icon: sidebarIcons.recent_purchases },
     { key: "profile", label: "Profile", icon: sidebarIcons.profile },
   ],
   supplier: [

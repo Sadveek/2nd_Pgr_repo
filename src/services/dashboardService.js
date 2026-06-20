@@ -1,10 +1,170 @@
 import mockData from "../mockData";
 import restockService from "./restockService";
 
+const REVENUE_MODE_KEY = "inventory_revenue_mode_v1";
+
+function readStoredBoolean(key, fallback = true) {
+  try {
+    const raw = localStorage.getItem(key);
+    if (raw === null) return fallback;
+    return raw === "true";
+  } catch (error) {
+    return fallback;
+  }
+}
+
+function writeStoredBoolean(key, value) {
+  try {
+    localStorage.setItem(key, value ? "true" : "false");
+  } catch (error) {
+    // ignore storage failures in non-browser contexts
+  }
+}
+
+function emitRevenueModeChange() {
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new Event("inventory-db-changed"));
+    window.dispatchEvent(new Event("inventory-revenue-mode-changed"));
+  }
+}
+
+function getRevenueMode() {
+  return readStoredBoolean(REVENUE_MODE_KEY, true);
+}
+
+function setRevenueMode(enabled) {
+  writeStoredBoolean(REVENUE_MODE_KEY, Boolean(enabled));
+  emitRevenueModeChange();
+}
+
+function getLastSevenDays() {
+  const labels = [];
+  const today = new Date();
+  for (let offset = 6; offset >= 0; offset -= 1) {
+    const date = new Date(today);
+    date.setDate(today.getDate() - offset);
+    labels.push({
+      label: date.toLocaleDateString(undefined, { weekday: "short" }),
+      dateKey: date.toISOString().slice(0, 10),
+    });
+  }
+  return labels;
+}
+
+function toCurrencyNumber(value) {
+  return Number(String(value || 0).replace(/[^0-9.-]/g, "")) || 0;
+}
+
+function buildFakeRevenueSeries(totalRevenue) {
+  const days = getLastSevenDays();
+  const weights = [0.78, 0.92, 1.06, 0.88, 1.18, 1.03, 1.35];
+  const weightTotal = weights.reduce((sum, weight) => sum + weight, 0);
+  const base = Number(totalRevenue || 0) > 0 ? Number(totalRevenue || 0) / weightTotal : 1200;
+  return days.map((day, index) => ({
+    label: day.label,
+    dateKey: day.dateKey,
+    value: Math.round(base * weights[index]),
+  }));
+}
+
+function buildLiveRevenueSeries(orders, transactions) {
+  const days = getLastSevenDays();
+  const buckets = Object.fromEntries(days.map((day) => [day.dateKey, 0]));
+  const entries = [...(orders || []), ...(transactions || [])];
+  for (const entry of entries) {
+    const createdAt = new Date(entry.createdAt || Date.now());
+    const dateKey = createdAt.toISOString().slice(0, 10);
+    if (dateKey in buckets) {
+      buckets[dateKey] += toCurrencyNumber(entry.amount || entry.totalPrice || 0);
+    }
+  }
+  return days.map((day) => ({
+    label: day.label,
+    dateKey: day.dateKey,
+    value: Math.round(buckets[day.dateKey] || 0),
+  }));
+}
+
+function buildFakeHistory(revenueSeries, products = [], suppliers = []) {
+  const customerNames = ["Aarav Shrestha", "Priya Koirala", "Nischal Rai", "Mira Gautam", "Sandeep Thapa", "Anisha Gurung", "Rohit Bista"];
+  const paymentMethods = ["Cash", "Card", "UPI", "Bank Transfer"];
+  const statuses = ["Completed", "Pending", "Refunded", "Completed", "Completed", "Completed", "Shipped"];
+
+  return revenueSeries.map((day, index) => {
+    const product = products[index % Math.max(1, products.length)] || {};
+    const supplier = suppliers.find((item) => item.id === product.supplierId) || null;
+    const createdAt = new Date(day.dateKey || Date.now()).getTime() + index * 60 * 60 * 1000;
+    const amount = Math.max(0, Number(day.value || 0));
+    const price = Number(product.price || 0) || 1;
+    const qty = Math.max(1, Math.round(amount / price));
+    const customerName = customerNames[index % customerNames.length];
+    const status = statuses[index % statuses.length];
+    const paymentMethod = paymentMethods[index % paymentMethods.length];
+
+    return {
+      order: {
+        id: `#ORD-${1001 + index}`,
+        customerName,
+        customerId: `cu_${index + 1}`,
+        createdAt,
+        totalPrice: amount,
+        status,
+        paymentMethod,
+        supplierId: supplier?.id || null,
+        items: [
+          {
+            productId: product.id || null,
+            qty,
+            price,
+          },
+        ],
+      },
+      transaction: {
+        id: `#TRX-${82910 - index}`,
+        customerName,
+        customerId: `cu_${index + 1}`,
+        orderId: `#ORD-${1001 + index}`,
+        createdAt,
+        amount,
+        status,
+        paymentMethod,
+      },
+    };
+  });
+}
+
+function getRevenueSnapshot({ orders = [], transactions = [] } = {}) {
+  const modeEnabled = getRevenueMode();
+  const liveTotal = orders.reduce((sum, order) => sum + toCurrencyNumber(order.totalPrice || 0), 0) || transactions.reduce((sum, tx) => sum + toCurrencyNumber(tx.amount || 0), 0);
+  const liveSeries = buildLiveRevenueSeries(orders, transactions);
+  const fakeSeries = buildFakeRevenueSeries(liveTotal || transactions.reduce((sum, tx) => sum + toCurrencyNumber(tx.amount || 0), 0) || 4200);
+  const revenueSeries = modeEnabled ? fakeSeries : liveSeries;
+  const totalRevenue = revenueSeries.reduce((sum, item) => sum + Number(item.value || 0), 0) || liveTotal || 0;
+  const averageOrderValue = (orders.length || transactions.length)
+    ? totalRevenue / Math.max(1, orders.length || transactions.length)
+    : totalRevenue / 7;
+  const dailyRevenue = revenueSeries[revenueSeries.length - 1]?.value || 0;
+
+  return {
+    enabled: modeEnabled,
+    totalRevenue,
+    averageOrderValue,
+    dailyRevenue,
+    revenueSeries,
+  };
+}
+
+function buildDisplayHistory({ orders = [], transactions = [], products = [], suppliers = [], revenueSeries = [], fakeMode = false } = {}) {
+  const fakeHistory = buildFakeHistory(revenueSeries, products, suppliers);
+  const displayOrders = fakeMode && fakeHistory.length ? fakeHistory.map((entry) => entry.order) : orders;
+  const displayTransactions = fakeMode && fakeHistory.length ? fakeHistory.map((entry) => entry.transaction) : transactions;
+  return { displayOrders, displayTransactions, fakeHistory };
+}
+
 const fallbackCustomer = {
   overviewStats: [
     { iconKey: "receipt", label: "Total Orders", value: "128", sub: "+12 this month", subColor: "#10b981" },
-    { iconKey: "chart", label: "Total Purchases", value: "$12,480", sub: "Avg. order $97", subColor: "#2563eb" },
+    { iconKey: "chart", label: "Total Purchases", value: "Rs. 12,480", sub: "Avg. order Rs. 97", subColor: "#2563eb" },
     { iconKey: "bell", label: "Recent Activity", value: "3", sub: "Unread updates", subColor: "#f59e0b" },
     { iconKey: "box", label: "Products Purchased", value: "42", sub: "Lifetime items", subColor: "#10b981" },
   ],
@@ -50,7 +210,7 @@ const fallbackSupplier = {
 };
 
 function money(amount) {
-  return `$${Number(amount || 0).toFixed(2)}`;
+  return `Rs. ${Number(amount || 0).toFixed(2)}`;
 }
 
 function getOrderStatusCounts(orders) {
@@ -79,17 +239,123 @@ function buildCatalogItems(products, limit = 6) {
   }));
 }
 
+function buildCategoryBreakdown(products, revenueSeries, fakeHistory, fakeMode) {
+  const categoryMap = new Map();
+  const historyEntries = fakeMode && fakeHistory.length ? fakeHistory : [];
+
+  if (historyEntries.length) {
+    for (const entry of historyEntries) {
+      const item = entry.order?.items?.[0];
+      const productCategory = products.find((product) => product.id === item?.productId)?.category || "Uncategorized";
+      const amount = Number(entry.order?.totalPrice || 0);
+      categoryMap.set(productCategory, (categoryMap.get(productCategory) || 0) + amount);
+    }
+  } else {
+    for (const product of products) {
+      const category = product.category || "Uncategorized";
+      const amount = Number(product.price || 0) * Number(product.quantity || 0);
+      categoryMap.set(category, (categoryMap.get(category) || 0) + amount);
+    }
+  }
+
+  const totalRevenue = revenueSeries.reduce((sum, item) => sum + Number(item.value || 0), 0) || 1;
+  return [...categoryMap.entries()]
+    .map(([name, value]) => ({
+      name,
+      value: money(value),
+      rawValue: value,
+      pct: Math.max(6, Math.round((Number(value || 0) / totalRevenue) * 100)),
+    }))
+    .sort((a, b) => b.rawValue - a.rawValue)
+    .slice(0, 4);
+}
+
+function buildAutoRestockRows(restockRequests, products, suppliers) {
+  return (restockRequests || [])
+    .filter((request) => String(request.source || "").toLowerCase() === "auto")
+    .sort((a, b) => Number(b.createdAt || 0) - Number(a.createdAt || 0))
+    .map((request, index) => {
+      const product = products.find((item) => item.id === request.productId) || {};
+      const supplier = suppliers.find((item) => item.id === request.supplierId) || null;
+      const quantity = Number(request.quantity || 0);
+      const currentStock = Number(product.quantity || request.stock || 0);
+      const status = String(request.status || "pending");
+      return {
+        id: request.id || `AR-${1001 + index}`,
+        sku: product.sku || request.productId || `AR-${1001 + index}`,
+        product: request.productName || product.name || "Auto Restock Request",
+        supplier: supplier?.companyName || product?.supplierName || "Unassigned",
+        date: new Date(request.createdAt || Date.now()).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" }),
+        quantity,
+        currentStock,
+        reason: request.reason || "Auto restock triggered",
+        status: status.replace(/^\w/, (m) => m.toUpperCase()),
+        statusColor: status.toLowerCase().includes("complete") ? "green" : "yellow",
+      };
+    });
+}
+
+function buildCustomerNotifications({ products = [], restockRequests = [], fakeMode = false } = {}) {
+  const completedRequests = (restockRequests || [])
+    .filter((request) => String(request.status || "").toLowerCase().includes("complete"))
+    .sort((a, b) => Number(b.createdAt || 0) - Number(a.createdAt || 0));
+
+  const completedRestockNotifications = completedRequests.map((request, index) => {
+    const product = products.find((item) => item.id === request.productId) || {};
+    const productName = product.name || request.productName || "Requested item";
+    return {
+      id: `restock-${request.id || index}`,
+      title: `${productName} is back in stock`,
+      detail: `Restock request ${request.id || `#${index + 1}`} was completed by admin.`,
+      time: new Date(request.createdAt || Date.now()).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" }),
+      tone: "green",
+      type: "restock",
+    };
+  });
+
+  if (completedRestockNotifications.length) return completedRestockNotifications.slice(0, 5);
+  if (!fakeMode) return [];
+
+  return [
+    {
+      id: "demo-restock-1",
+      title: "Wireless Keyboard Pro restocked",
+      detail: "A new batch is available for ordering.",
+      time: "Today",
+      tone: "green",
+      type: "restock",
+    },
+    {
+      id: "demo-restock-2",
+      title: "Smart Lighting Kit reminder ready",
+      detail: "You can enable a reminder for the next restock.",
+      time: "Today",
+      tone: "blue",
+      type: "reminder",
+    },
+  ];
+}
+
 export async function getCustomerSnapshot() {
   const db = mockData.read();
   const products = db.products || [];
   const orders = db.orders || [];
   const transactions = db.transactions || [];
+  const revenue = getRevenueSnapshot({ orders, transactions });
+  const { displayOrders, displayTransactions } = buildDisplayHistory({
+    orders,
+    transactions,
+    products,
+    revenueSeries: revenue.revenueSeries,
+    fakeMode: revenue.enabled,
+  });
+  const historyOrders = revenue.enabled ? displayOrders : orders;
   const totalStock = products.reduce((sum, item) => sum + Number(item.quantity || 0), 0);
   const lowStockCount = products.filter((p) => (p.quantity || 0) > 0 && (p.quantity || 0) < 20).length;
   const outOfStockCount = products.filter((p) => (p.quantity || 0) === 0).length;
   const uniquePurchasedProducts = new Set();
 
-  const purchaseHistory = orders.slice(0, 5).map((order, index) => {
+  const purchaseHistory = historyOrders.slice(0, 5).map((order, index) => {
     const firstItem = order.items?.[0];
     const product = products.find((p) => p.id === firstItem?.productId);
     if (product) uniquePurchasedProducts.add(product.id);
@@ -104,12 +370,12 @@ export async function getCustomerSnapshot() {
     };
   });
 
-  const ordersCount = orders.length || transactions.length || 0;
-  const purchasesTotal = money(orders.reduce((sum, order) => sum + Number(order.totalPrice || 0), 0) || transactions.reduce((sum, tx) => sum + Number(tx.amount || 0), 0) || 12480);
-  const recentActivityCount = transactions.length || orders.length || 3;
+  const ordersCount = historyOrders.length || displayTransactions.length || 0;
+  const purchasesTotal = money(revenue.totalRevenue || 12480);
+  const recentActivityCount = displayTransactions.length || historyOrders.length || 3;
   const productsPurchased = uniquePurchasedProducts.size || products.length || 42;
-  const statusCounts = getOrderStatusCounts(orders);
-  const summaryCards = orders.length
+  const statusCounts = getOrderStatusCounts(historyOrders);
+  const summaryCards = historyOrders.length
     ? [
         { label: "Delivered", value: String(statusCounts.delivered), color: "#10b981" },
         { label: "Shipped", value: String(statusCounts.shipped), color: "#2563eb" },
@@ -119,7 +385,7 @@ export async function getCustomerSnapshot() {
     : fallbackCustomer.summaryCards;
 
   const overviewStats = [
-    { iconKey: "receipt", label: "Total Orders", value: String(ordersCount), sub: `${orders.length || transactions.length ? "Live" : "No"} this month`, subColor: "#10b981" },
+    { iconKey: "receipt", label: "Total Orders", value: String(ordersCount), sub: `${historyOrders.length || displayTransactions.length ? "Live" : "No"} this month`, subColor: "#10b981" },
     { iconKey: "chart", label: "Total Purchases", value: purchasesTotal, sub: `Stock on hand ${totalStock}`, subColor: "#2563eb" },
     { iconKey: "bell", label: "Recent Activity", value: String(recentActivityCount), sub: `${lowStockCount + outOfStockCount} inventory alerts`, subColor: "#f59e0b" },
     { iconKey: "box", label: "Products Purchased", value: String(productsPurchased), sub: `${products.length} catalog items`, subColor: "#10b981" },
@@ -129,10 +395,14 @@ export async function getCustomerSnapshot() {
     overviewStats,
     catalogItems: buildCatalogItems(products),
     purchaseHistory: purchaseHistory.length ? purchaseHistory : [
-      { id: "#ORD-1001", product: "Wireless Keyboard Pro", qty: 1, date: "May 12, 2024", total: "$129.00", status: "Delivered", tone: "green" },
+      { id: "#ORD-1001", product: "Wireless Keyboard Pro", qty: 1, date: "May 12, 2024", total: "Rs. 129.00", status: "Delivered", tone: "green" },
     ],
     activityTimeline: fallbackCustomer.activityTimeline,
     summaryCards,
+    revenueSeries: revenue.revenueSeries,
+    dailyRevenue: revenue.dailyRevenue,
+    revenueModeEnabled: revenue.enabled,
+    notifications: buildCustomerNotifications({ products, restockRequests: db.restockRequests || [], fakeMode: revenue.enabled }),
     hasLiveData: orders.length > 0 || products.length > 0,
   };
 }
@@ -143,6 +413,7 @@ export async function getSupplierSnapshot() {
   const products = db.products || [];
   const restockRequests = db.restockRequests || [];
   const suppliers = db.suppliers || [];
+  const revenue = getRevenueSnapshot({ orders: db.orders || [], transactions: db.transactions || [] });
   const lowStockProducts = products.filter((p) => (p.quantity || 0) > 0 && (p.quantity || 0) < 20);
   const outOfStockProducts = products.filter((p) => (p.quantity || 0) === 0);
   const fulfilledRequests = restockRequests.filter((r) => String(r.status || "").toLowerCase().includes("complete"));
@@ -195,6 +466,9 @@ export async function getSupplierSnapshot() {
       { label: "Medium", color: "#2563eb", tone: "blue" },
       { label: "Low", color: "#10b981", tone: "green" },
     ],
+    revenueSeries: revenue.revenueSeries,
+    dailyRevenue: revenue.dailyRevenue,
+    revenueModeEnabled: revenue.enabled,
     supplierRows: suppliers.map((s, index) => ({
       abbr: (s.companyName || s.contactName || `S${index + 1}`).split(" ").map((part) => part[0]).join("").slice(0, 2).toUpperCase(),
       name: s.companyName || s.contactName || "Supplier",
@@ -215,16 +489,27 @@ export async function getAdminSnapshot() {
   const suppliers = db.suppliers || [];
   const orders = db.orders || [];
   const transactions = db.transactions || [];
+  const restockRequests = db.restockRequests || [];
+  const revenue = getRevenueSnapshot({ orders, transactions });
+  const { displayOrders, displayTransactions, fakeHistory } = buildDisplayHistory({
+    orders,
+    transactions,
+    products,
+    suppliers,
+    revenueSeries: revenue.revenueSeries,
+    fakeMode: revenue.enabled,
+  });
 
   const totalStock = products.reduce((sum, product) => sum + Number(product.quantity || 0), 0);
   const lowStockCount = products.filter((p) => (p.quantity || 0) > 0 && (p.quantity || 0) < 20).length;
   const outOfStockCount = products.filter((p) => (p.quantity || 0) === 0).length;
-  const totalRevenue = orders.reduce((sum, order) => sum + Number(order.totalPrice || 0), 0) || transactions.reduce((sum, tx) => sum + Number(tx.amount || 0), 0);
-  const totalOrders = orders.length || transactions.length;
-  const avgOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
+  const totalRevenue = revenue.totalRevenue;
+  const totalOrders = revenue.enabled ? fakeHistory.length : (displayOrders.length || displayTransactions.length);
+  const avgOrderValue = revenue.averageOrderValue;
   const supplierCount = suppliers.length;
   const activeSuppliers = suppliers.length ? suppliers.length : 124;
   const categories = [...new Set(products.map((p) => p.category).filter(Boolean))];
+  const categoryBreakdown = buildCategoryBreakdown(products, revenue.revenueSeries, fakeHistory, revenue.enabled);
 
   const supplierRows = suppliers.slice(0, 4).map((s, index) => ({
     abbr: (s.companyName || s.contactName || `S${index + 1}`).split(" ").map((part) => part[0]).join("").slice(0, 2).toUpperCase(),
@@ -237,12 +522,15 @@ export async function getAdminSnapshot() {
     statusColor: "green",
   }));
 
-  const salesRows = (transactions.length ? transactions : orders).slice(0, 5).map((entry, index) => ({
+  const salesSource = revenue.enabled && fakeHistory.length
+    ? fakeHistory.map((entry) => entry.transaction)
+    : (displayTransactions.length ? displayTransactions : displayOrders);
+  const salesRows = salesSource.map((entry, index) => ({
     id: entry.id || `#TRX-${82910 - index}`,
     avatar: (entry.customerId || entry.username || "CU").slice(0, 2).toUpperCase(),
     name: entry.customerName || `Customer ${index + 1}`,
     date: new Date(entry.createdAt || Date.now()).toLocaleString(undefined, { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" }),
-    amount: `$${Number(entry.amount || entry.totalPrice || 0).toFixed(2)}`,
+    amount: `Rs. ${Number(entry.amount || entry.totalPrice || 0).toFixed(2)}`,
     status: String(entry.status || "Completed").replace(/^\w/, (m) => m.toUpperCase()),
     statusColor: String(entry.status || "completed").toLowerCase().includes("pend") ? "yellow" : String(entry.status || "").toLowerCase().includes("refund") ? "red" : "green",
   }));
@@ -256,7 +544,7 @@ export async function getAdminSnapshot() {
     soldColor: "#2563eb",
     status: (p.quantity || 0) === 0 ? "Out of Stock" : (p.quantity || 0) < 20 ? "Low Stock" : "In Stock",
     statusColor: (p.quantity || 0) === 0 ? "red" : (p.quantity || 0) < 20 ? "yellow" : "green",
-    val: `$${(Number(p.price || 0) * Number(p.quantity || 0)).toFixed(2)}`,
+    val: `Rs. ${(Number(p.price || 0) * Number(p.quantity || 0)).toFixed(2)}`,
   }));
 
   return {
@@ -274,6 +562,14 @@ export async function getAdminSnapshot() {
     salesRows,
     reportRows,
     products,
+    revenueSeries: revenue.revenueSeries,
+    dailyRevenue: revenue.dailyRevenue,
+    revenueModeEnabled: revenue.enabled,
+    transactionHistory: displayTransactions,
+    orderHistory: displayOrders,
+    fakeHistory,
+    categoryBreakdown,
+    autoRestockRows: buildAutoRestockRows(restockRequests, products, suppliers),
   };
 }
 
@@ -281,4 +577,6 @@ export default {
   getCustomerSnapshot,
   getSupplierSnapshot,
   getAdminSnapshot,
+  getRevenueMode,
+  setRevenueMode,
 };
