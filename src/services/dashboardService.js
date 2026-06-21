@@ -161,6 +161,26 @@ function buildDisplayHistory({ orders = [], transactions = [], products = [], su
   return { displayOrders, displayTransactions, fakeHistory };
 }
 
+function normalizeCustomerOrderStatus(status) {
+  const raw = String(status || "").trim().toLowerCase();
+  if (raw.includes("deliver") || raw.includes("complete")) {
+    return { label: "Delivered", tone: "green" };
+  }
+  if (raw.includes("ship")) {
+    return { label: "Shipped", tone: "yellow" };
+  }
+  if (raw.includes("return") || raw.includes("refund")) {
+    return { label: "Returned", tone: "red" };
+  }
+  if (raw.includes("process") || raw.includes("pend")) {
+    return { label: "Processing", tone: "blue" };
+  }
+  return {
+    label: status ? String(status).replace(/^\w/, (m) => m.toUpperCase()) : "Placed",
+    tone: "blue",
+  };
+}
+
 const fallbackCustomer = {
   overviewStats: [
     { iconKey: "receipt", label: "Total Orders", value: "128", sub: "+12 this month", subColor: "#10b981" },
@@ -358,6 +378,7 @@ export async function getCustomerSnapshot() {
   const purchaseHistory = historyOrders.slice(0, 5).map((order, index) => {
     const firstItem = order.items?.[0];
     const product = products.find((p) => p.id === firstItem?.productId);
+    const normalizedStatus = normalizeCustomerOrderStatus(order.status);
     if (product) uniquePurchasedProducts.add(product.id);
     return {
       id: order.id || `#ORD-${1001 + index}`,
@@ -365,8 +386,8 @@ export async function getCustomerSnapshot() {
       qty: firstItem?.qty || order.items?.length || 1,
       date: new Date(order.createdAt || Date.now()).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" }),
       total: money(order.totalPrice || 0),
-      status: order.status || "Placed",
-      tone: order.status === "delivered" ? "green" : order.status === "returned" ? "red" : order.status === "shipped" ? "yellow" : "blue",
+      status: normalizedStatus.label,
+      tone: normalizedStatus.tone,
     };
   });
 

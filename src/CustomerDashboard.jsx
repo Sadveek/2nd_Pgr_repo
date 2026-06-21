@@ -64,6 +64,15 @@ const readStoredArray = (key) => {
   }
 };
 
+const normalizeHistoryStatus = (status) => {
+  const raw = String(status || "").trim().toLowerCase();
+  if (raw.includes("deliver") || raw.includes("complete")) return "delivered";
+  if (raw.includes("ship")) return "shipped";
+  if (raw.includes("return") || raw.includes("refund")) return "returned";
+  if (raw.includes("process") || raw.includes("pend")) return "processing";
+  return raw;
+};
+
 const PageHeader = ({ title, subtitle, actions }) => (
   <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 16, marginBottom: 20, flexWrap: "wrap" }}>
     <div>
@@ -206,7 +215,7 @@ const CustomerDashboard = ({ page = "customer", revenueModeEnabled, onToggleReve
       row.id.toLowerCase().includes(query) ||
       row.product.toLowerCase().includes(query) ||
       row.total.toLowerCase().includes(query);
-    const matchesStatus = historyStatus === "all" || row.status.toLowerCase() === historyStatus;
+    const matchesStatus = historyStatus === "all" || normalizeHistoryStatus(row.status) === historyStatus;
     return matchesQuery && matchesStatus && isWithinHistoryRange(row.date);
   });
   const catalogPageCount = Math.max(1, Math.ceil(filteredCatalog.length / ITEMS_PER_PAGE));
