@@ -3,6 +3,7 @@ import {
   Icon,
   Badge,
   StatCard,
+  TablePanel,
   APP_FONT_STACK,
   APP_PAGE_BACKGROUND,
   APP_CONTROL_INPUT_STYLE,
@@ -11,7 +12,6 @@ import {
   APP_ACCENT_SHADOW,
   APP_PANEL_STYLE,
   ThemeSelect,
-  Pagination,
 } from "./components/UI";
 import dashboardService from "./services/dashboardService";
 import restockService from "./services/restockService";
@@ -40,9 +40,9 @@ const icons = {
 
 const PageHeader = ({ title, subtitle, actions }) => (
   <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 16, marginBottom: 20, flexWrap: "wrap" }}>
-    <div>
-      <h1 style={{ margin: 0, fontSize: 24, fontWeight: 800, lineHeight: 1.08, letterSpacing: -0.3, color: "#111827" }}>{title}</h1>
-      {subtitle ? <p style={{ margin: "6px 0 0", color: "#6b7280", fontSize: 13, fontWeight: 400 }}>{subtitle}</p> : null}
+    <div style={{ minWidth: 0 }}>
+      <h1 style={{ margin: 0, fontSize: 26, fontWeight: 800, lineHeight: 1.08, letterSpacing: -0.3, color: "#0f172a" }}>{title}</h1>
+      {subtitle ? <p style={{ margin: "8px 0 0", color: "#64748b", fontSize: 13, fontWeight: 400, lineHeight: 1.6, maxWidth: 720 }}>{subtitle}</p> : null}
     </div>
     {actions ? <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>{actions}</div> : null}
   </div>
@@ -113,58 +113,6 @@ const availabilityTone = (quantity) => {
   if (stock < 20) return "yellow";
   return "green";
 };
-
-const TablePanel = ({ title, subtitle, badge, columns, rows, pagination, emptyText }) => (
-  <Panel style={{ overflow: "hidden", padding: 0 }}>
-    <div style={{ padding: 20, borderBottom: "1px solid #e5e7eb", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
-      <div>
-        <h2 style={{ margin: 0, fontSize: 15, fontWeight: 800, color: "#111827" }}>{title}</h2>
-        {subtitle ? <div style={{ marginTop: 6, fontSize: 12, color: "#6b7280" }}>{subtitle}</div> : null}
-      </div>
-      {badge ? <Badge color={badge.color || "blue"}>{badge.label}</Badge> : null}
-    </div>
-    <div style={{ overflowX: "auto" }}>
-      <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
-        <thead>
-          <tr style={{ borderBottom: "2px solid #e5e7eb", background: "#f9fafb" }}>
-            {columns.map((column) => (
-              <th key={column} style={{ textAlign: "left", padding: "12px 16px", fontSize: 11, fontWeight: 700, color: "#9ca3af", letterSpacing: 0.4, textTransform: "uppercase" }}>
-                {column}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {rows.length ? (
-            rows.map((row, index) => (
-              <tr key={row.id || index} style={{ borderBottom: "1px solid #e5e7eb", background: index % 2 === 0 ? "#fff" : "#f9fafb" }}>
-                {row.cells.map((cell, cellIndex) => (
-                  <td key={cellIndex} style={{ padding: "14px 16px", color: cell.color || "#111827", fontWeight: 500, verticalAlign: "top" }}>
-                    {cell.content}
-                  </td>
-                ))}
-              </tr>
-            ))
-          ) : (
-            <tr>
-              <td colSpan={columns.length} style={{ padding: 28, textAlign: "center", color: "#6b7280" }}>
-                {emptyText || "No records found."}
-              </td>
-            </tr>
-          )}
-        </tbody>
-      </table>
-    </div>
-    {pagination ? (
-      <div style={{ padding: "14px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, borderTop: "1px solid #e5e7eb", background: "#f9fafb", flexWrap: "wrap" }}>
-        <span style={{ fontSize: 12, color: "#6b7280" }}>
-          Showing {pagination.totalItems ? (pagination.currentPage - 1) * ITEMS_PER_PAGE + 1 : 0}-{Math.min(pagination.currentPage * ITEMS_PER_PAGE, pagination.totalItems)} of {pagination.totalItems}
-        </span>
-        <Pagination currentPage={pagination.currentPage} totalPages={pagination.totalPages} onPageChange={pagination.onPageChange} />
-      </div>
-    ) : null}
-  </Panel>
-);
 
 const SupplierDashboard = ({ page = "restock_requests", revenueModeEnabled, onToggleRevenueMode }) => {
   const [snapshot, setSnapshot] = useState(null);

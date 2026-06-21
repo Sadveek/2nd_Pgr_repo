@@ -13,6 +13,7 @@ import {
   APP_ACCENT_GRADIENT,
   APP_ACCENT_SHADOW,
   APP_PAGE_BACKGROUND,
+  APP_PANEL_STYLE,
   APP_CONTROL_INPUT_STYLE,
   APP_CONTROL_BUTTON_STYLE,
   ThemeSelect,
@@ -244,16 +245,22 @@ const SearchableSelect = ({ label, placeholder = "Search...", value, onChange, o
   );
 };
 
-const TopBar = ({ title, onRefresh }) => (
-  <header style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, padding: "14px 24px", borderBottom: "1px solid #e5e7eb", background: "#fff", flexShrink: 0, boxShadow: "0 1px 3px rgba(0, 0, 0, 0.05)" }}>
-    <span style={{ fontWeight: 800, color: "#111827", fontSize: 15, letterSpacing: 0.1 }}>{title || "Inventory Pro"}</span>
+const TopBar = ({ title, subtitle, onRefresh }) => (
+  <header style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, padding: "16px 24px", borderBottom: "1px solid rgba(219, 231, 255, 0.95)", background: "linear-gradient(135deg, rgba(238,244,255,0.98) 0%, rgba(255,255,255,0.92) 48%, rgba(237,242,255,0.96) 100%)", flexShrink: 0, boxShadow: "0 1px 3px rgba(15, 23, 42, 0.05)", backdropFilter: "blur(10px)", WebkitBackdropFilter: "blur(10px)" }}>
+    <div style={{ minWidth: 0 }}>
+      <div style={{ fontWeight: 800, color: "#0f172a", fontSize: 15, letterSpacing: 0.1, lineHeight: 1.2 }}>{title || "Inventory Pro"}</div>
+      <div style={{ marginTop: 4, color: "#64748b", fontSize: 12, fontWeight: 500 }}>{subtitle || "Live inventory portal"}</div>
+    </div>
     <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+      <span style={{ padding: "8px 12px", borderRadius: 999, border: "1px solid rgba(37, 99, 235, 0.16)", background: "rgba(37, 99, 235, 0.08)", color: "#1d4ed8", fontSize: 11, fontWeight: 800, letterSpacing: 0.4, textTransform: "uppercase" }}>
+        Auto sync on
+      </span>
       <button
         type="button"
         onClick={onRefresh}
         style={{
-          padding: "10px 18px",
-          borderRadius: 10,
+          padding: "10px 16px",
+          borderRadius: 12,
           border: "1px solid #6d5efc",
           background: APP_ACCENT_GRADIENT,
           color: "#fff",
@@ -338,7 +345,8 @@ const LoginPage = ({ onLogin }) => {
   };
 
   return (
-    <div style={{ minHeight: "100vh", background: "linear-gradient(145deg,#e8eeff 0%,#f5f7ff 60%,#edf2ff 100%)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", fontFamily: APP_FONT_STACK, padding: 24 }}>
+    <div style={{ minHeight: "100vh", position: "relative", overflow: "hidden", background: APP_PAGE_BACKGROUND, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", fontFamily: APP_FONT_STACK, padding: 24 }}>
+      <div style={{ position: "absolute", inset: 0, background: "radial-gradient(circle at 20% 20%, rgba(37, 99, 235, 0.16), transparent 28%), radial-gradient(circle at 80% 12%, rgba(124, 58, 237, 0.14), transparent 26%), radial-gradient(circle at 50% 90%, rgba(37, 99, 235, 0.10), transparent 30%)", pointerEvents: "none" }} />
       <div style={{ marginBottom: 24, textAlign: "center" }}>
         <div style={{ width: 64, height: 64, borderRadius: 16, background: APP_ACCENT_GRADIENT, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px", boxShadow: APP_ACCENT_SHADOW }}>
           <Icon d={icons.grid} size={30} stroke="#fff" strokeWidth={1.5} />
@@ -475,7 +483,7 @@ const DashboardPage = () => {
     });
   };
   return (
-    <div style={{ flex: 1, overflowY: "auto", padding: "20px 24px", background: "#f9fafb", fontFamily: APP_FONT_STACK }}>
+    <div style={{ flex: 1, overflowY: "auto", padding: "20px 24px", background: APP_PAGE_BACKGROUND, fontFamily: APP_FONT_STACK }}>
       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 20 }}>
         <div>
           <h1 style={{ margin: 0, fontSize: 24, fontWeight: 700, lineHeight: 1.08, letterSpacing: -0.2, color: "#111827" }}>Dashboard Overview</h1>
@@ -841,7 +849,7 @@ const ProductsPage = ({ role = "admin" }) => {
   };
 
   return (
-    <div style={{ flex: 1, overflowY: "auto", padding: "20px 24px", background: "#f9fafb" }}>
+    <div style={{ flex: 1, overflowY: "auto", padding: "20px 24px", background: APP_PAGE_BACKGROUND }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 20 }}>
         <div>
           <h1 style={{ margin: 0, fontSize: 24, fontWeight: 700, lineHeight: 1.08, letterSpacing: -0.2, color: "#111827" }}>{canEdit ? "Product Management" : "Product Catalog"}</h1>
@@ -869,7 +877,14 @@ const ProductsPage = ({ role = "admin" }) => {
           </div>
         ) : null}
       </div>
-      <div style={{ background: "#fff", borderRadius: 12, border: "1px solid #e5e7eb", padding: 20, boxShadow: "0 1px 3px rgba(0, 0, 0, 0.05)", marginBottom: 20 }}>
+      <div style={{ ...APP_PANEL_STYLE, padding: 20, marginBottom: 20 }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginBottom: 14, flexWrap: "wrap" }}>
+          <div>
+            <div style={{ fontSize: 12, color: "#2563eb", fontWeight: 800, letterSpacing: 0.4, textTransform: "uppercase" }}>Filter inventory</div>
+            <div style={{ marginTop: 5, fontSize: 13, color: "#64748b" }}>Search, filter, and narrow the catalog before making changes.</div>
+          </div>
+          <Badge color="blue">{filteredProducts.length} results</Badge>
+        </div>
         <div style={{ display: "grid", gridTemplateColumns: "1.5fr repeat(2, minmax(150px, 1fr)) auto", gap: 12, alignItems: "center" }}>
           <div style={{ position: "relative" }}>
             <span style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "#9ca3af" }}><Icon d={icons.search} size={14} /></span>
@@ -932,25 +947,28 @@ const ProductsPage = ({ role = "admin" }) => {
         </div>
       </div>
 
-      <div style={{ background: "#fff", borderRadius: 12, border: "1px solid #e5e7eb", overflow: "hidden", boxShadow: "0 1px 3px rgba(0, 0, 0, 0.05)" }}>
-        <div style={{ padding: 20, display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid #e5e7eb" }}>
+      <div style={{ ...APP_PANEL_STYLE, padding: 0, overflow: "hidden" }}>
+        <div style={{ padding: 20, display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid rgba(219, 231, 255, 0.95)", background: "linear-gradient(180deg, rgba(248,251,255,0.94) 0%, rgba(255,255,255,0.98) 100%)" }}>
           <h2 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: "#111827" }}>Inventory</h2>
-          <div style={{ fontSize: 12, color: "#9ca3af" }}>{loading ? "Loading..." : `Showing ${filteredProducts.length} products`}</div>
+          <div style={{ fontSize: 12, color: "#64748b", fontWeight: 600 }}>{loading ? "Loading..." : `Showing ${filteredProducts.length} products`}</div>
         </div>
         <div style={{ overflowX: "auto" }}>
           {error && <div style={{ padding: 12, color: "#ef4444" }}>{error}</div>}
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13, tableLayout: "fixed" }}>
             <thead>
-              <tr style={{ borderBottom: "2px solid #e5e7eb", background: "#f9fafb" }}>
+              <tr style={{ borderBottom: "2px solid rgba(219, 231, 255, 0.95)", background: "linear-gradient(180deg, rgba(249,250,251,0.98) 0%, rgba(255,255,255,0.94) 100%)" }}>
                 {columns.map((h) => (
                   <th
                     key={h}
                     style={{
+                      position: "sticky",
+                      top: 0,
+                      zIndex: 1,
                       textAlign: "left",
                       padding: "12px 16px",
                       fontSize: 11,
-                      fontWeight: 700,
-                      color: "#9ca3af",
+                      fontWeight: 800,
+                      color: "#94a3b8",
                       letterSpacing: 0.5,
                       textTransform: "uppercase",
                       whiteSpace: "nowrap",
@@ -975,7 +993,7 @@ const ProductsPage = ({ role = "admin" }) => {
                 const stockLabel = (p.quantity || 0) === 0 ? "OUT OF STOCK" : (p.quantity || 0) < 20 ? "LOW STOCK" : "IN STOCK";
                 const stockColor = stockLabel === "OUT OF STOCK" ? "red" : stockLabel === "LOW STOCK" ? "yellow" : "green";
                 return (
-                  <tr key={p.id} style={{ borderBottom: "1px solid #e5e7eb", transition: "all 0.2s ease", background: idx % 2 === 0 ? "#f9fafb" : "#fff" }} onMouseEnter={(e) => { e.currentTarget.style.background = "#f3f4f6"; }} onMouseLeave={(e) => { e.currentTarget.style.background = idx % 2 === 0 ? "#f9fafb" : "#fff"; }}>
+                  <tr key={p.id} style={{ borderBottom: "1px solid rgba(226, 232, 240, 0.9)", transition: "background 0.2s ease", background: idx % 2 === 0 ? "#fff" : "#f8fbff" }} onMouseEnter={(e) => { e.currentTarget.style.background = "#eef4ff"; }} onMouseLeave={(e) => { e.currentTarget.style.background = idx % 2 === 0 ? "#fff" : "#f8fbff"; }}>
                     {canEdit ? (
                       <>
                         <td style={{ padding: "14px 16px", fontWeight: 700, color: "#111827", fontSize: 12, overflow: "hidden", textOverflow: "ellipsis" }}>{p.sku || "-"}</td>
@@ -1308,7 +1326,7 @@ const SuppliersPage = () => {
     }
   };
   return (
-    <div style={{ flex: 1, overflowY: "auto", padding: "20px 24px", background: "#f9fafb" }}>
+    <div style={{ flex: 1, overflowY: "auto", padding: "20px 24px", background: APP_PAGE_BACKGROUND }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 20 }}>
         <div>
           <h1 style={{ margin: 0, fontSize: 24, fontWeight: 700, lineHeight: 1.08, letterSpacing: -0.2, color: "#111827" }}>Supplier Directory</h1>
@@ -1346,7 +1364,7 @@ const SuppliersPage = () => {
           </div>
         ))}
       </div>
-      <div style={{ background: "#fff", borderRadius: 12, border: "1px solid #e5e7eb", padding: 20, boxShadow: "0 1px 3px rgba(0, 0, 0, 0.05)", marginBottom: 20 }}>
+      <div style={{ ...APP_PANEL_STYLE, padding: 20, marginBottom: 20 }}>
         <div style={{ display: "grid", gridTemplateColumns: "1.5fr repeat(2, minmax(150px, 1fr)) auto", gap: 12, alignItems: "center" }}>
           <div style={{ position: "relative" }}>
             <span style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "#9ca3af" }}><Icon d={icons.search} size={14} /></span>
@@ -1380,7 +1398,7 @@ const SuppliersPage = () => {
         </div>
       </div>
 
-      <div style={{ background: "#fff", borderRadius: 12, border: "1px solid #e5e7eb", overflow: "hidden", boxShadow: "0 1px 3px rgba(0, 0, 0, 0.05)" }}>
+      <div style={{ ...APP_PANEL_STYLE, padding: 0, overflow: "hidden" }}>
         <div style={{ padding: 20, borderBottom: "1px solid #e5e7eb", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <h2 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: "#111827" }}>Suppliers</h2>
           <Badge color="gray">{filteredRows.length} suppliers</Badge>
@@ -1583,7 +1601,7 @@ const SalesPage = () => {
     setSalesPage((current) => Math.min(current, salesPageCount));
   }, [salesPageCount]);
   return (
-    <div style={{ flex: 1, overflowY: "auto", padding: "20px 24px", background: "#f9fafb" }}>
+    <div style={{ flex: 1, overflowY: "auto", padding: "20px 24px", background: APP_PAGE_BACKGROUND }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 20 }}>
         <div>
           <h1 style={{ margin: 0, fontSize: 24, fontWeight: 700, lineHeight: 1.08, letterSpacing: -0.2, color: "#111827" }}>Sales Records</h1>
@@ -1606,7 +1624,7 @@ const SalesPage = () => {
           </div>
         ))}
       </div>
-      <div style={{ background: "#fff", borderRadius: 12, border: "1px solid #e5e7eb", padding: 20, boxShadow: "0 1px 3px rgba(0, 0, 0, 0.05)", marginBottom: 20 }}>
+      <div style={{ ...APP_PANEL_STYLE, padding: 20, marginBottom: 20 }}>
         <div style={{ display: "grid", gridTemplateColumns: "1.5fr repeat(2, minmax(150px, 1fr))", gap: 12, alignItems: "center" }}>
           <div style={{ position: "relative" }}>
             <span style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "#9ca3af" }}><Icon d={icons.search} size={14} /></span>
@@ -1640,7 +1658,7 @@ const SalesPage = () => {
           </button>
         </div>
       </div>
-      <div style={{ background: "#fff", borderRadius: 12, border: "1px solid #e5e7eb", overflow: "hidden", boxShadow: "0 1px 3px rgba(0, 0, 0, 0.05)" }}>
+      <div style={{ ...APP_PANEL_STYLE, padding: 0, overflow: "hidden" }}>
         <div style={{ padding: 20, borderBottom: "1px solid #e5e7eb", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <h2 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: "#111827" }}>Transaction History</h2>
         </div>
@@ -1722,7 +1740,7 @@ const ReportsPage = () => {
     setReportPage((current) => Math.min(current, reportPageCount));
   }, [reportPageCount]);
   return (
-    <div style={{ flex: 1, overflowY: "auto", padding: "20px 24px", background: "#f9fafb" }}>
+    <div style={{ flex: 1, overflowY: "auto", padding: "20px 24px", background: APP_PAGE_BACKGROUND }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 20 }}>
         <div>
           <h1 style={{ margin: 0, fontSize: 24, fontWeight: 700, lineHeight: 1.08, letterSpacing: -0.2, color: "#111827" }}>Reports & Analytics</h1>
@@ -1822,7 +1840,7 @@ const ReportsPage = () => {
 
 // ─── Role-specific placeholder pages ─────────────────────────────────────────
 const PurchaseHistoryPage = () => (
-  <div style={{ flex: 1, overflowY: "auto", padding: "20px 24px", background: "#f9fafb" }}>
+  <div style={{ flex: 1, overflowY: "auto", padding: "20px 24px", background: APP_PAGE_BACKGROUND }}>
     <h1 style={{ fontSize: 22, fontWeight: 700, lineHeight: 1.08, letterSpacing: -0.2 }}>Purchase History</h1>
     <p style={{ color: "#6b7280", fontWeight: 400 }}>All purchases made by the customer.</p>
     <div style={{ marginTop: 12, background: "#fff", borderRadius: 12, padding: 16, border: "1px solid #e5e7eb" }}>
@@ -1840,7 +1858,7 @@ const PurchaseHistoryPage = () => (
 );
 
 const RecentPurchasesPage = () => (
-  <div style={{ flex: 1, overflowY: "auto", padding: "20px 24px", background: "#f9fafb" }}>
+  <div style={{ flex: 1, overflowY: "auto", padding: "20px 24px", background: APP_PAGE_BACKGROUND }}>
     <h1 style={{ fontSize: 22, fontWeight: 700, lineHeight: 1.08, letterSpacing: -0.2 }}>Recent Purchases</h1>
     <p style={{ color: "#6b7280", fontWeight: 400 }}>Quick view of your latest orders.</p>
     <div style={{ marginTop: 12 }}>
@@ -1922,7 +1940,7 @@ const SuppliedProductsPage = () => {
 };
 
 const RestockRequestsPage = () => (
-  <div style={{ flex: 1, overflowY: "auto", padding: "20px 24px", background: "#f9fafb" }}>
+  <div style={{ flex: 1, overflowY: "auto", padding: "20px 24px", background: APP_PAGE_BACKGROUND }}>
     <h1 style={{ fontSize: 22, fontWeight: 700, lineHeight: 1.08, letterSpacing: -0.2 }}>Restock Requests</h1>
     <p style={{ color: "#6b7280" }}>View and manage restock requests.</p>
     <div style={{ marginTop: 12 }}>
@@ -2147,7 +2165,19 @@ export default function App() {
     <div style={{ fontFamily: APP_FONT_STACK, display: "flex", height: "100vh", overflow: "hidden", background: APP_PAGE_BACKGROUND }}>
       <Sidebar active={page} setPage={setPageAuthorized} onLogout={handleLogout} role={role} />
       <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
-        <TopBar title={currentTitle} onRefresh={handleRefresh} />
+        <TopBar
+          title={currentTitle}
+          subtitle={
+            role === "admin"
+              ? "Administrator portal"
+            : role === "customer"
+                ? "Customer portal"
+              : role === "supplier"
+                  ? "Supplier portal"
+                  : "Inventory portal"
+          }
+          onRefresh={handleRefresh}
+        />
         {role === "customer" ? (
           <CustomerDashboard
             page={page}

@@ -89,20 +89,22 @@ export const StatCard = ({ icon, label, value, sub, subColor = "#10b981", highli
   const borderColor = highlight ? "rgba(252, 165, 165, 0.35)" : "rgba(219, 231, 255, 0.95)";
   const iconBg = highlight ? "rgba(252, 165, 165, 0.18)" : "rgba(37, 99, 235, 0.10)";
   const iconColor = highlight ? "#dc2626" : "#2563eb";
+  const accentColor = highlight ? "#dc2626" : subColor;
   return (
-    <div style={{ background: bgColor, border: `1px solid ${borderColor}`, borderRadius: 18, padding: "18px 18px 16px", flex: 1, minWidth: 150, transition: "all 0.25s ease", cursor: "default", boxShadow: "0 12px 28px rgba(15, 23, 42, 0.06)", backdropFilter: "blur(14px)", WebkitBackdropFilter: "blur(14px)" }}>
-      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 12 }}>
+    <div style={{ position: "relative", overflow: "hidden", background: bgColor, border: `1px solid ${borderColor}`, borderRadius: 20, padding: "18px 18px 16px", flex: 1, minWidth: 150, transition: "transform 0.2s ease, box-shadow 0.2s ease", cursor: "default", boxShadow: "0 14px 30px rgba(15, 23, 42, 0.07)", backdropFilter: "blur(14px)", WebkitBackdropFilter: "blur(14px)" }}>
+      <div style={{ position: "absolute", inset: "0 auto auto 0", width: "100%", height: 4, background: `linear-gradient(90deg, ${accentColor} 0%, rgba(255,255,255,0.65) 100%)` }} />
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 12, gap: 12 }}>
         <div style={{ width: 40, height: 40, borderRadius: 12, background: iconBg, display: "flex", alignItems: "center", justifyContent: "center", color: iconColor, boxShadow: "inset 0 1px 0 rgba(255,255,255,0.65)" }}>
           {icon}
         </div>
         {sub && (
-          <span style={{ fontSize: 11, fontWeight: 700, color: subColor, background: `${subColor}14`, padding: "5px 10px", borderRadius: 999, display: "inline-flex", alignItems: "center", gap: 4, border: `1px solid ${subColor}22`, whiteSpace: "nowrap" }}>
+          <span style={{ fontSize: 11, fontWeight: 800, color: accentColor, background: `${accentColor}12`, padding: "5px 10px", borderRadius: 999, display: "inline-flex", alignItems: "center", gap: 4, border: `1px solid ${accentColor}22`, whiteSpace: "nowrap", boxShadow: "0 4px 12px rgba(15, 23, 42, 0.04)" }}>
             {sub}
           </span>
         )}
       </div>
-      <div style={{ fontSize: 11, color: "#64748b", fontWeight: 600, letterSpacing: 0.4, textTransform: "uppercase", marginBottom: 8 }}>{label}</div>
-      <div style={{ fontSize: 26, fontWeight: 700, color: highlight ? "#991b1b" : "#0f172a", letterSpacing: -0.6, lineHeight: 1.05 }}>{value}</div>
+      <div style={{ fontSize: 11, color: "#64748b", fontWeight: 700, letterSpacing: 0.4, textTransform: "uppercase", marginBottom: 8 }}>{label}</div>
+      <div style={{ fontSize: 28, fontWeight: 800, color: highlight ? "#991b1b" : "#0f172a", letterSpacing: -0.8, lineHeight: 1.02 }}>{value}</div>
     </div>
   );
 };
@@ -256,7 +258,7 @@ export const Sidebar = ({ active, setPage, onLogout, role }) => {
         flexShrink: 0,
         display: "flex",
         flexDirection: "column",
-        background: "linear-gradient(180deg, rgba(255,255,255,0.84) 0%, rgba(245,248,255,0.76) 100%)",
+        background: "linear-gradient(180deg, rgba(238,244,255,0.98) 0%, rgba(250,252,255,0.94) 42%, rgba(237,242,255,0.92) 100%)",
         color: "#111827",
         borderRight: "1px solid rgba(219, 231, 255, 0.95)",
         boxShadow: "2px 0 30px rgba(15, 23, 42, 0.08)",
@@ -264,7 +266,7 @@ export const Sidebar = ({ active, setPage, onLogout, role }) => {
         WebkitBackdropFilter: "blur(18px)",
       }}
     >
-      <div style={{ padding: collapsed ? 14 : 20, borderBottom: "1px solid rgba(219, 231, 255, 0.9)", background: "linear-gradient(135deg, rgba(248,251,255,0.94) 0%, rgba(255,255,255,0.9) 100%)" }}>
+      <div style={{ padding: collapsed ? 14 : 20, borderBottom: "1px solid rgba(219, 231, 255, 0.9)", background: "linear-gradient(135deg, rgba(248,251,255,0.98) 0%, rgba(255,255,255,0.96) 45%, rgba(239,246,255,0.94) 100%)" }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: collapsed ? "center" : "space-between", gap: 12 }}>
           {!collapsed && (
             <div style={{ display: "flex", alignItems: "center", gap: 12, minWidth: 0 }}>
@@ -319,7 +321,7 @@ export const Sidebar = ({ active, setPage, onLogout, role }) => {
                 textAlign: "left",
                 cursor: "pointer",
                 color: isActive ? "#1d4ed8" : "#475569",
-                background: isActive ? "linear-gradient(135deg, rgba(37,99,235,0.12) 0%, rgba(255,255,255,0.94) 100%)" : "transparent",
+                background: isActive ? "linear-gradient(135deg, rgba(37,99,235,0.12) 0%, rgba(255,255,255,0.96) 100%)" : "transparent",
                 boxShadow: isActive ? "0 12px 24px rgba(37, 99, 235, 0.12)" : "none",
                 fontSize: 13,
                 fontWeight: isActive ? 700 : 600,
@@ -369,7 +371,7 @@ export const Sidebar = ({ active, setPage, onLogout, role }) => {
         })}
       </nav>
 
-      <div style={{ padding: collapsed ? 12 : 14, borderTop: "1px solid rgba(219, 231, 255, 0.9)", background: "linear-gradient(180deg, rgba(255,255,255,0.92) 0%, rgba(248,251,255,0.86) 100%)" }}>
+      <div style={{ padding: collapsed ? 12 : 14, borderTop: "1px solid rgba(219, 231, 255, 0.9)", background: "linear-gradient(180deg, rgba(255,255,255,0.96) 0%, rgba(248,251,255,0.9) 100%)" }}>
         <button
           type="button"
           onClick={onLogout}
@@ -391,7 +393,7 @@ export const Sidebar = ({ active, setPage, onLogout, role }) => {
           }}
           title="Logout"
         >
-          <Icon d={sidebarIcons.profile} size={14} stroke="#b91c1c" />
+          <Icon d={sidebarIcons.x || sidebarIcons.profile} size={14} stroke="#b91c1c" />
           {!collapsed && <span>Logout</span>}
         </button>
       </div>
@@ -426,7 +428,7 @@ export const Pagination = ({ currentPage = 1, totalPages = 1, onPageChange }) =>
     padding: "0 10px",
     border: "1px solid",
     borderColor: active ? "#6d5efc" : "#dbe2ea",
-    borderRadius: 10,
+    borderRadius: 12,
     background: active ? APP_ACCENT_GRADIENT : disabled ? "#f8fafc" : "#fff",
     color: active ? "#fff" : disabled ? "#94a3b8" : "#111827",
     cursor: disabled ? "not-allowed" : "pointer",
@@ -485,6 +487,71 @@ export const Pagination = ({ currentPage = 1, totalPages = 1, onPageChange }) =>
           <Icon d="M9 18l6-6-6-6" size={14} stroke={safeCurrentPage === safeTotalPages ? "#94a3b8" : "#111827"} />
         </button>
       )}
+    </div>
+  );
+};
+
+export const TablePanel = ({ title, subtitle, badge, columns, rows, pagination, emptyText }) => {
+  const pageSize = pagination?.pageSize || 100;
+
+  return (
+    <div style={{ ...APP_PANEL_STYLE, overflow: "hidden", padding: 0 }}>
+      <div style={{ padding: 20, borderBottom: "1px solid rgba(219, 231, 255, 0.95)", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap", background: "linear-gradient(180deg, rgba(248,251,255,0.94) 0%, rgba(255,255,255,0.98) 100%)" }}>
+        <div>
+          <h2 style={{ margin: 0, fontSize: 15, fontWeight: 800, color: "#0f172a" }}>{title}</h2>
+          {subtitle ? <div style={{ marginTop: 6, fontSize: 12, color: "#64748b" }}>{subtitle}</div> : null}
+        </div>
+        {badge ? <Badge color={badge.color || "blue"}>{badge.label}</Badge> : null}
+      </div>
+      <div style={{ overflowX: "auto" }}>
+        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+          <thead>
+            <tr style={{ borderBottom: "2px solid rgba(219, 231, 255, 0.95)", background: "linear-gradient(180deg, rgba(249,250,251,0.98) 0%, rgba(255,255,255,0.94) 100%)" }}>
+              {columns.map((column) => (
+                <th key={column} style={{ position: "sticky", top: 0, zIndex: 1, textAlign: "left", padding: "12px 16px", fontSize: 11, fontWeight: 800, color: "#94a3b8", letterSpacing: 0.4, textTransform: "uppercase" }}>
+                  {column}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {rows.length ? (
+              rows.map((row, index) => (
+                <tr
+                  key={row.id || index}
+                  style={{ borderBottom: "1px solid rgba(226, 232, 240, 0.9)", background: index % 2 === 0 ? "#fff" : "#f8fbff", transition: "background 0.18s ease" }}
+                  onMouseEnter={(event) => {
+                    event.currentTarget.style.background = "#eef4ff";
+                  }}
+                  onMouseLeave={(event) => {
+                    event.currentTarget.style.background = index % 2 === 0 ? "#fff" : "#f8fbff";
+                  }}
+                >
+                  {row.cells.map((cell, cellIndex) => (
+                    <td key={cellIndex} style={{ padding: "14px 16px", color: cell.color || "#111827", fontWeight: 500, verticalAlign: "top" }}>
+                      {cell.content}
+                    </td>
+                  ))}
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan={columns.length} style={{ padding: 28, textAlign: "center", color: "#6b7280" }}>
+                  {emptyText || "No records found."}
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+      {pagination ? (
+        <div style={{ padding: "14px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, borderTop: "1px solid rgba(219, 231, 255, 0.95)", background: "linear-gradient(180deg, rgba(249,250,251,0.98) 0%, rgba(255,255,255,0.96) 100%)", flexWrap: "wrap" }}>
+          <span style={{ fontSize: 12, color: "#6b7280" }}>
+            Showing {pagination.totalItems ? (pagination.currentPage - 1) * pageSize + 1 : 0}-{Math.min(pagination.currentPage * pageSize, pagination.totalItems)} of {pagination.totalItems}
+          </span>
+          <Pagination currentPage={pagination.currentPage} totalPages={pagination.totalPages} onPageChange={pagination.onPageChange} />
+        </div>
+      ) : null}
     </div>
   );
 };

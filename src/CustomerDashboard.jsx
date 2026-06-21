@@ -75,10 +75,10 @@ const normalizeHistoryStatus = (status) => {
 };
 
 const PageHeader = ({ title, subtitle, actions }) => (
-  <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 16, marginBottom: 20, flexWrap: "wrap" }}>
-    <div>
-      <h1 style={{ margin: 0, fontSize: 24, fontWeight: 700, lineHeight: 1.08, letterSpacing: -0.2, color: "#111827" }}>{title}</h1>
-      <p style={{ margin: "6px 0 0", color: "#6b7280", fontSize: 13, fontWeight: 400 }}>{subtitle}</p>
+    <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 16, marginBottom: 20, flexWrap: "wrap" }}>
+      <div style={{ minWidth: 0 }}>
+      <h1 style={{ margin: 0, fontSize: 26, fontWeight: 800, lineHeight: 1.08, letterSpacing: -0.3, color: "#0f172a" }}>{title}</h1>
+      <p style={{ margin: "8px 0 0", color: "#64748b", fontSize: 13, fontWeight: 400, lineHeight: 1.6, maxWidth: 720 }}>{subtitle}</p>
     </div>
     {actions && (
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
