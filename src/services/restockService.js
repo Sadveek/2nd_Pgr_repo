@@ -100,7 +100,7 @@ export default {
         (request) =>
           request.productId === product.id &&
           request.source === "auto" &&
-          normalizeStatus(request.status) === "pending"
+          ["pending", "accepted"].includes(normalizeStatus(request.status))
       );
 
       if (existing) {
@@ -148,7 +148,26 @@ export default {
     if (!request) throw new Error("Request not found");
 
     const normalizedStatus = normalizeStatus(request.status);
-    if (normalizedStatus.includes("complete") || normalizedStatus.includes("accept")) {
+    if (normalizedStatus.includes("complete")) {
+      return request;
+    }
+
+    request.status = "accepted";
+    request.statusTone = "blue";
+    request.acceptedBy = supplierId || request.acceptedBy || null;
+    request.acceptedAt = Date.now();
+
+    writeDb(db);
+    return request;
+  },
+
+  markDelivered: async (requestId) => {
+    const db = mockData.read();
+    const request = (db.restockRequests || []).find((item) => item.id === requestId);
+    if (!request) throw new Error("Request not found");
+
+    const normalizedStatus = normalizeStatus(request.status);
+    if (normalizedStatus.includes("complete")) {
       return request;
     }
 
@@ -160,8 +179,7 @@ export default {
 
     request.status = "completed";
     request.statusTone = "green";
-    request.acceptedBy = supplierId || request.acceptedBy || null;
-    request.acceptedAt = Date.now();
+    request.deliveredAt = Date.now();
     request.fulfilledAt = Date.now();
 
     writeDb(db);

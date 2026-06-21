@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import CustomerDashboard from "./CustomerDashboard";
 import SupplierDashboard from "./SupplierDashboard";
 import { Icon, Badge, StatCard, Sidebar } from "./components/UI";
-import mockData from "./mockData";
 import productService from "./services/productService";
 import supplierService from "./services/supplierService";
 import restockService from "./services/restockService";
@@ -13,6 +12,7 @@ import {
   APP_FONT_STACK,
   APP_ACCENT_GRADIENT,
   APP_ACCENT_SHADOW,
+  APP_PAGE_BACKGROUND,
   APP_CONTROL_INPUT_STYLE,
   APP_CONTROL_BUTTON_STYLE,
   ThemeSelect,
@@ -54,42 +54,6 @@ const ITEMS_PER_PAGE = 100;
 const formatRs = (amount, digits = 2) => `Rs. ${Number(amount || 0).toLocaleString(undefined, { minimumFractionDigits: digits, maximumFractionDigits: digits })}`;
 
 // Shared UI components are imported from ./components/UI
-
-const ActionButton = ({ label, icon, variant = "secondary", onClick }) => {
-  const isPrimary = variant === "primary";
-  return (
-    <button
-      onClick={onClick}
-        style={{
-          padding: "10px 18px",
-          borderRadius: 10,
-          border: `1px solid ${isPrimary ? "#6d5efc" : "#111827"}`,
-          background: isPrimary ? APP_ACCENT_GRADIENT : "#fff",
-          color: isPrimary ? "#fff" : "#111827",
-        display: "inline-flex",
-        alignItems: "center",
-        gap: 8,
-        fontWeight: 700,
-        fontSize: 14,
-        letterSpacing: 0,
-        boxShadow: isPrimary ? APP_ACCENT_SHADOW : "0 1px 2px rgba(15, 23, 42, 0.04)",
-        cursor: "pointer",
-        transition: "transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease",
-      }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.transform = "translateY(-1px)";
-        e.currentTarget.style.boxShadow = isPrimary ? "0 12px 22px rgba(92, 88, 255, 0.22)" : "0 3px 8px rgba(15, 23, 42, 0.06)";
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.transform = "translateY(0)";
-        e.currentTarget.style.boxShadow = isPrimary ? APP_ACCENT_SHADOW : "0 1px 2px rgba(15, 23, 42, 0.04)";
-      }}
-    >
-      {icon}
-      <span>{label}</span>
-    </button>
-  );
-};
 
 const Modal = ({ open, title, subtitle, children, footer, onClose, width = 560 }) => {
   useEffect(() => {
@@ -280,11 +244,10 @@ const SearchableSelect = ({ label, placeholder = "Search...", value, onChange, o
   );
 };
 
-const TopBar = ({ title, onExport, onRefresh }) => (
+const TopBar = ({ title, onRefresh }) => (
   <header style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, padding: "14px 24px", borderBottom: "1px solid #e5e7eb", background: "#fff", flexShrink: 0, boxShadow: "0 1px 3px rgba(0, 0, 0, 0.05)" }}>
     <span style={{ fontWeight: 800, color: "#111827", fontSize: 15, letterSpacing: 0.1 }}>{title || "Inventory Pro"}</span>
     <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-      <ActionButton label="Export" icon={<Icon d={icons.download} size={14} />} variant="secondary" onClick={onExport} />
       <button
         type="button"
         onClick={onRefresh}
@@ -415,7 +378,7 @@ const LoginPage = ({ onLogin }) => {
           </button>
           <div style={{ display: "flex", gap: 8, marginTop: 6 }}>
             <button onClick={() => onLogin("customer", "products", true)} style={{ flex: 1, padding: "10px", borderRadius: 10, border: "1px solid #6d5efc", background: "#fff", cursor: "pointer", fontWeight: 700, color: "#5b49ff" }}>Customer Portal</button>
-            <button onClick={() => onLogin("supplier", "supplier", true)} style={{ flex: 1, padding: "10px", borderRadius: 10, border: "1px solid #6d5efc", background: "#fff", cursor: "pointer", fontWeight: 700, color: "#5b49ff" }}>Supplier Portal</button>
+            <button onClick={() => onLogin("supplier", "restock_requests", true)} style={{ flex: 1, padding: "10px", borderRadius: 10, border: "1px solid #6d5efc", background: "#fff", cursor: "pointer", fontWeight: 700, color: "#5b49ff" }}>Supplier Portal</button>
           </div>
         </div>
 
@@ -480,10 +443,37 @@ const DashboardPage = () => {
   const slowMovingRate = totalProducts > 0 ? Math.round((lowStockCount / totalProducts) * 100) : 0;
   const expiredDamagedRate = totalProducts > 0 ? Math.round((outOfStockCount / totalProducts) * 100) : 0;
   const inventoryHealth = [
-    { pct: turnoverRate, label: "Turnover Rate", sub: "Healthy SKUs", color: "#10b981" },
+    { pct: turnoverRate, label: "Healthy SKUs", sub: "Turnover Rate", color: "#10b981" },
     { pct: slowMovingRate, label: "Slow Moving", sub: "Low stock", color: "#f59e0b" },
-    { pct: expiredDamagedRate, label: "Expired/Damaged", sub: "Out of stock", color: "#ef4444" },
+    { pct: expiredDamagedRate, label: "Out of Stock", sub: "Expired/Damaged", color: "#ef4444" },
   ];
+  const handleMakeAudit = () => {
+    if (!snapshot) return;
+    downloadJson(`inventory-audit-${new Date().toISOString().slice(0, 10)}.json`, {
+      generatedAt: new Date().toISOString(),
+      totals: {
+        totalProducts,
+        totalStock,
+        lowStockCount,
+        outOfStockCount,
+        healthySkuCount,
+      },
+      percentages: {
+        healthySkuRate: turnoverRate,
+        slowMovingRate,
+        expiredDamagedRate,
+      },
+      inventoryHealth,
+      revenue: {
+        totalRevenue: snapshot?.totalRevenue ?? 0,
+        dailyRevenue: snapshot?.dailyRevenue ?? 0,
+        modeEnabled: Boolean(snapshot?.revenueModeEnabled),
+      },
+      topCategories: snapshot?.categories || [],
+      recentSales: snapshot?.salesRows || [],
+      stockRows: snapshot?.reportRows || [],
+    });
+  };
   return (
     <div style={{ flex: 1, overflowY: "auto", padding: "20px 24px", background: "#f9fafb", fontFamily: APP_FONT_STACK }}>
       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 20 }}>
@@ -590,7 +580,34 @@ const DashboardPage = () => {
               </div>
             </div>
           ))}
-          <button style={{ width: "100%", padding: "10px", border: "1px solid #e5e7eb", borderRadius: 8, background: "#f9fafb", cursor: "pointer", fontWeight: 600, fontSize: 13, color: "#6b7280", transition: "all 0.2s ease", marginTop: 4 }} onMouseEnter={(e) => { e.currentTarget.style.background = "#f3f4f6"; }} onMouseLeave={(e) => { e.currentTarget.style.background = "#f9fafb"; }}>View Audit</button>
+          <button
+            type="button"
+            onClick={handleMakeAudit}
+            disabled={!snapshot}
+            style={{
+              width: "100%",
+              padding: "10px",
+              border: "1px solid #dbe2ea",
+              borderRadius: 8,
+              background: snapshot ? "linear-gradient(135deg, #fff 0%, #eff6ff 100%)" : "#f9fafb",
+              cursor: snapshot ? "pointer" : "not-allowed",
+              fontWeight: 600,
+              fontSize: 13,
+              color: snapshot ? "#1d4ed8" : "#9ca3af",
+              transition: "all 0.2s ease",
+              marginTop: 4,
+            }}
+            onMouseEnter={(e) => {
+              if (!snapshot) return;
+              e.currentTarget.style.background = "#e0efff";
+            }}
+            onMouseLeave={(e) => {
+              if (!snapshot) return;
+              e.currentTarget.style.background = "linear-gradient(135deg, #fff 0%, #eff6ff 100%)";
+            }}
+          >
+            Make Audit
+          </button>
         </div>
       </div>
       <div style={{ background: "#fff", borderRadius: 12, border: "1px solid #e5e7eb", padding: 20, boxShadow: "0 1px 3px rgba(0, 0, 0, 0.05)" }}>
@@ -902,16 +919,16 @@ const ProductsPage = ({ role = "admin" }) => {
           <div style={{ fontSize: 24, fontWeight: 700 }}>{stats.totalProducts}</div>
         </div>
         <div style={{ background: "linear-gradient(135deg, #fff 0%, #f9fafb 100%)", border: "1px solid #e5e7eb", borderRadius: 12, padding: "16px 18px" }}>
-          <div style={{ fontSize: 12, color: "#9ca3af", fontWeight: 600, textTransform: "uppercase", marginBottom: 6 }}>Low Stock Items</div>
-          <div style={{ fontSize: 24, fontWeight: 700, color: "#ef4444" }}>{stats.lowStockCount}</div>
-        </div>
-        <div style={{ background: "linear-gradient(135deg, #fff 0%, #f9fafb 100%)", border: "1px solid #e5e7eb", borderRadius: 12, padding: "16px 18px" }}>
           <div style={{ fontSize: 12, color: "#9ca3af", fontWeight: 600, textTransform: "uppercase", marginBottom: 6 }}>Total Stock</div>
           <div style={{ fontSize: 24, fontWeight: 700 }}>{stats.totalStock}</div>
         </div>
-        <div style={{ background: "linear-gradient(135deg, #fff 0%, #f9fafb 100%)", border: "1px solid #e5e7eb", borderRadius: 12, padding: "16px 18px" }}>
-          <div style={{ fontSize: 12, color: "#9ca3af", fontWeight: 600, textTransform: "uppercase", marginBottom: 6 }}>Out of Stock</div>
-          <div style={{ fontSize: 24, fontWeight: 700 }}>{stats.outOfStockCount}</div>
+        <div style={{ background: "linear-gradient(135deg, #fff 0%, #fffbeb 100%)", border: "1px solid #fed7aa", borderRadius: 12, padding: "16px 18px" }}>
+          <div style={{ fontSize: 12, color: "#b45309", fontWeight: 600, textTransform: "uppercase", marginBottom: 6 }}>Low Stock Items</div>
+          <div style={{ fontSize: 24, fontWeight: 700, color: "#d97706" }}>{stats.lowStockCount}</div>
+        </div>
+        <div style={{ background: "linear-gradient(135deg, #fff 0%, #fef2f2 100%)", border: "1px solid #fecaca", borderRadius: 12, padding: "16px 18px" }}>
+          <div style={{ fontSize: 12, color: "#b91c1c", fontWeight: 600, textTransform: "uppercase", marginBottom: 6 }}>Out of Stock</div>
+          <div style={{ fontSize: 24, fontWeight: 700, color: "#dc2626" }}>{stats.outOfStockCount}</div>
         </div>
       </div>
 
@@ -1996,12 +2013,12 @@ const ProfilePage = ({ role, revenueModeEnabled, onToggleRevenueMode }) => (
 const allowedPages = {
   admin: ["dashboard", "products", "suppliers", "sales", "reports", "profile"],
   customer: ["products", "purchase_history", "profile"],
-  supplier: ["supplier", "supplied_products", "restock_requests", "supply_history", "profile"],
+  supplier: ["restock_requests", "supplied_products", "supply_history", "profile"],
 };
 
 const getDefaultPage = (role) => {
   if (role === "customer") return "products";
-  if (role === "supplier") return "supplier";
+  if (role === "supplier") return "restock_requests";
   return "dashboard";
 };
 
@@ -2019,6 +2036,19 @@ export default function App() {
   const [role, setRole] = useState(null);
   const [rememberSession, setRememberSession] = useState(false);
   const [revenueModeEnabled, setRevenueModeEnabled] = useState(() => dashboardService.getRevenueMode());
+
+  useEffect(() => {
+    const root = document.documentElement;
+    const body = document.body;
+    const previousRootFont = root.style.fontFamily;
+    const previousBodyFont = body.style.fontFamily;
+    root.style.fontFamily = APP_FONT_STACK;
+    body.style.fontFamily = APP_FONT_STACK;
+    return () => {
+      root.style.fontFamily = previousRootFont;
+      body.style.fontFamily = previousBodyFont;
+    };
+  }, []);
 
   const handleLogin = (roleName, startPage, remember) => {
     setRole(roleName);
@@ -2096,7 +2126,6 @@ export default function App() {
 
   const pageTitles = {
     dashboard: "Dashboard",
-    supplier: "Supplier",
     products: "Products",
     suppliers: "Suppliers",
     sales: "Sales",
@@ -2110,25 +2139,15 @@ export default function App() {
 
   const currentTitle = pageTitles[page] || "Inventory Pro";
 
-  const handleExport = () => {
-    const payload = {
-      exportedAt: new Date().toISOString(),
-      page,
-      role,
-      db: mockData.read(),
-    };
-    downloadJson(`inventory-export-${page}.json`, payload);
-  };
-
   const handleRefresh = () => {
     window.dispatchEvent(new Event("inventory-db-changed"));
   };
 
   return (
-    <div style={{ fontFamily: APP_FONT_STACK, display: "flex", height: "100vh", overflow: "hidden", background: "#f9fafb" }}>
+    <div style={{ fontFamily: APP_FONT_STACK, display: "flex", height: "100vh", overflow: "hidden", background: APP_PAGE_BACKGROUND }}>
       <Sidebar active={page} setPage={setPageAuthorized} onLogout={handleLogout} role={role} />
       <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
-        <TopBar title={currentTitle} onExport={handleExport} onRefresh={handleRefresh} />
+        <TopBar title={currentTitle} onRefresh={handleRefresh} />
         {role === "customer" ? (
           <CustomerDashboard
             page={page}
@@ -2136,7 +2155,11 @@ export default function App() {
             onToggleRevenueMode={handleToggleRevenueMode}
           />
         ) : role === "supplier" ? (
-          <SupplierDashboard page={page} />
+          <SupplierDashboard
+            page={page}
+            revenueModeEnabled={revenueModeEnabled}
+            onToggleRevenueMode={handleToggleRevenueMode}
+          />
         ) : (
           <>
             {page === "dashboard" && <DashboardPage />}

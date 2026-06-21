@@ -7,6 +7,7 @@ import {
   APP_CONTROL_BUTTON_STYLE,
   APP_ACCENT_GRADIENT,
   APP_ACCENT_SHADOW,
+  APP_PAGE_BACKGROUND,
   ThemeSelect,
   Pagination,
 } from "./components/UI";
@@ -279,7 +280,7 @@ const CustomerDashboard = ({ page = "customer", revenueModeEnabled, onToggleReve
   };
 
   const renderProfile = () => (
-    <div style={{ flex: 1, overflowY: "auto", padding: "20px 24px", background: "#f9fafb" }}>
+    <div style={{ flex: 1, overflowY: "auto", padding: "20px 24px", background: APP_PAGE_BACKGROUND }}>
       <h1 style={{ fontSize: 22, fontWeight: 700, lineHeight: 1.08, letterSpacing: -0.2 }}>Profile</h1>
       <p style={{ color: "#6b7280" }}>Basic account information for the current user.</p>
       <div style={{ marginTop: 12, background: "#fff", borderRadius: 12, padding: 16, border: "1px solid #e5e7eb", display: "grid", gap: 12 }}>
@@ -287,7 +288,7 @@ const CustomerDashboard = ({ page = "customer", revenueModeEnabled, onToggleReve
           <div style={{ fontWeight: 700 }}>Inventory Pro</div>
           <div style={{ color: "#6b7280", marginTop: 6 }}>Role: Customer</div>
         </div>
-        <div style={{ padding: 14, borderRadius: 12, background: revenueModeEnabled ? "linear-gradient(135deg, #eff6ff 0%, #ffffff 100%)" : "#f9fafb", border: `1px solid ${revenueModeEnabled ? "#bfdbfe" : "#e5e7eb"}`, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+        <div style={{ padding: 14, borderRadius: 16, background: revenueModeEnabled ? "linear-gradient(135deg, rgba(239,246,255,0.96) 0%, rgba(255,255,255,0.9) 100%)" : "rgba(255,255,255,0.82)", border: `1px solid ${revenueModeEnabled ? "rgba(191,219,254,0.95)" : "rgba(219,231,255,0.95)"}`, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap", backdropFilter: "blur(14px)", WebkitBackdropFilter: "blur(14px)", boxShadow: "0 10px 24px rgba(15, 23, 42, 0.05)" }}>
           <div>
             <div style={{ fontSize: 13, fontWeight: 700, color: "#111827" }}>Fake Revenue Mode</div>
             <div style={{ fontSize: 12, color: "#6b7280", marginTop: 4 }}>
@@ -684,7 +685,7 @@ const CustomerDashboard = ({ page = "customer", revenueModeEnabled, onToggleReve
   };
 
   return (
-    <div style={{ flex: 1, minHeight: 0, overflowY: "auto", padding: "20px 24px", background: "#f9fafb" }}>
+    <div style={{ flex: 1, minHeight: 0, overflowY: "auto", padding: "20px 24px", background: APP_PAGE_BACKGROUND }}>
       {(renderByPage[page] || renderProducts)()}
     </div>
   );

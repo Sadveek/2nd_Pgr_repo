@@ -310,7 +310,7 @@ function buildAutoRestockRows(restockRequests, products, suppliers) {
         currentStock,
         reason: request.reason || "Auto restock triggered",
         status: status.replace(/^\w/, (m) => m.toUpperCase()),
-        statusColor: status.toLowerCase().includes("complete") ? "green" : "yellow",
+        statusColor: status.toLowerCase().includes("complete") ? "green" : status.toLowerCase().includes("accept") ? "blue" : "yellow",
       };
     });
 }
@@ -437,13 +437,17 @@ export async function getSupplierSnapshot() {
   const revenue = getRevenueSnapshot({ orders: db.orders || [], transactions: db.transactions || [] });
   const lowStockProducts = products.filter((p) => (p.quantity || 0) > 0 && (p.quantity || 0) < 20);
   const outOfStockProducts = products.filter((p) => (p.quantity || 0) === 0);
-  const fulfilledRequests = restockRequests.filter((r) => String(r.status || "").toLowerCase().includes("complete"));
+  const requestStatus = (value) => String(value || "").toLowerCase();
+  const openRequests = restockRequests.filter((r) => !requestStatus(r.status).includes("complete"));
+  const pendingRequests = openRequests.filter((r) => requestStatus(r.status).includes("pend"));
+  const acceptedRequests = openRequests.filter((r) => requestStatus(r.status).includes("accept"));
+  const fulfilledRequests = restockRequests.filter((r) => requestStatus(r.status).includes("complete"));
   const totalStock = products.reduce((sum, item) => sum + Number(item.quantity || 0), 0);
   const supplierCount = suppliers.length || 0;
 
   const overviewStats = [
-    { iconKey: "truck", label: "Active Requests", value: String(restockRequests.length || lowStockProducts.length || 24), sub: `Stock on hand ${totalStock}`, subColor: "#2563eb" },
-    { iconKey: "clock", label: "Pending Requests", value: String(restockRequests.filter((r) => String(r.status || "").toLowerCase().includes("pending")).length || lowStockProducts.length || 8), sub: `${supplierCount} suppliers`, subColor: "#f59e0b" },
+    { iconKey: "truck", label: "Active Requests", value: String(openRequests.length || lowStockProducts.length || 24), sub: `Stock on hand ${totalStock}`, subColor: "#2563eb" },
+    { iconKey: "clock", label: "Pending Requests", value: String(pendingRequests.length || lowStockProducts.length || 8), sub: `${supplierCount} suppliers`, subColor: "#f59e0b" },
     { iconKey: "check", label: "Fulfilled Requests", value: String(fulfilledRequests.length || 61), sub: "This month", subColor: "#10b981" },
     { iconKey: "alert", label: "Critical Requests", value: String([...lowStockProducts, ...outOfStockProducts].length || 3), sub: "Immediate action", subColor: "#ef4444" },
   ];
@@ -463,7 +467,17 @@ export async function getSupplierSnapshot() {
       reason: item.reason || (source === "auto" ? "Auto restock request" : "Manual restock request"),
       priority,
       priorityTone: item.priorityTone || (priority === "Critical" ? "red" : priority === "High" ? "orange" : priority === "Low" ? "green" : "blue"),
-      statusTone: item.statusTone || (String(status).toLowerCase().includes("complete") ? "green" : String(status).toLowerCase().includes("pend") ? "yellow" : "blue"),
+      statusTone:
+        item.statusTone ||
+        (String(status).toLowerCase().includes("complete")
+          ? "green"
+          : String(status).toLowerCase().includes("deliver")
+            ? "orange"
+            : String(status).toLowerCase().includes("accept")
+              ? "blue"
+              : String(status).toLowerCase().includes("pend")
+                ? "yellow"
+                : "blue"),
       status,
       source,
       sourceLabel: source === "auto" ? "Auto" : "Manual",
@@ -480,6 +494,7 @@ export async function getSupplierSnapshot() {
     overviewStats,
     automatedRequests,
     manualRequests,
+    acceptedRequests: acceptedRequests.map(normalizeRequest),
     activityItems: fallbackSupplier.activityItems,
     priorityLegend: [
       { label: "Critical", color: "#ef4444", tone: "red" },

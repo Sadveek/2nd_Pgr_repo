@@ -3,18 +3,21 @@ import React, { useEffect, useRef, useState } from "react";
 export const APP_FONT_STACK = '"Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif';
 export const APP_ACCENT_GRADIENT = "linear-gradient(135deg, #2563eb 0%, #7c3aed 100%)";
 export const APP_ACCENT_SHADOW = "0 10px 22px rgba(92, 88, 255, 0.18)";
+export const APP_PAGE_BACKGROUND = "radial-gradient(circle at top left, rgba(37, 99, 235, 0.10), transparent 32%), radial-gradient(circle at top right, rgba(124, 58, 237, 0.08), transparent 28%), linear-gradient(145deg, #eef4ff 0%, #f7faff 52%, #edf2ff 100%)";
 export const APP_PANEL_STYLE = {
-  background: "#fff",
-  borderRadius: 12,
-  border: "1px solid #e5e7eb",
-  boxShadow: "0 1px 3px rgba(0, 0, 0, 0.05)",
+  background: "linear-gradient(180deg, rgba(255,255,255,0.94) 0%, rgba(248,251,255,0.88) 100%)",
+  backdropFilter: "blur(16px)",
+  WebkitBackdropFilter: "blur(16px)",
+  borderRadius: 16,
+  border: "1px solid rgba(219, 231, 255, 0.95)",
+  boxShadow: "0 12px 32px rgba(15, 23, 42, 0.06)",
 };
 export const APP_CONTROL_INPUT_STYLE = {
   width: "100%",
   padding: "12px 14px",
-  borderRadius: 12,
-  border: "1px solid #cbd5e1",
-  background: "#fff",
+  borderRadius: 14,
+  border: "1px solid #dbe7ff",
+  background: "linear-gradient(180deg, rgba(255,255,255,0.96) 0%, rgba(248,251,255,0.92) 100%)",
   color: "#111827",
   fontFamily: APP_FONT_STACK,
   fontSize: 13,
@@ -26,25 +29,25 @@ export const APP_CONTROL_SELECT_STYLE = {
   ...APP_CONTROL_INPUT_STYLE,
   cursor: "pointer",
   appearance: "none",
-  backgroundImage: "linear-gradient(180deg, #ffffff 0%, #f8fbff 100%)",
+  backgroundImage: "linear-gradient(180deg, rgba(255,255,255,0.96) 0%, rgba(248,251,255,0.92) 100%)",
   backgroundPosition: "0 0",
   backgroundSize: "100% 100%",
   backgroundRepeat: "no-repeat",
   paddingRight: 36,
-  boxShadow: "0 1px 3px rgba(15, 23, 42, 0.04)",
+  boxShadow: "0 8px 18px rgba(15, 23, 42, 0.04)",
   transition: "border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease",
 };
 export const APP_CONTROL_BUTTON_STYLE = {
   padding: "11px 16px",
-  borderRadius: 999,
-  border: "1px solid #dbe2ea",
-  background: "#fff",
+  borderRadius: 14,
+  border: "1px solid #dbe7ff",
+  background: "linear-gradient(180deg, rgba(255,255,255,0.98) 0%, rgba(248,251,255,0.92) 100%)",
   color: "#111827",
   fontFamily: APP_FONT_STACK,
   fontSize: 14,
   fontWeight: 600,
   cursor: "pointer",
-  boxShadow: "0 1px 3px rgba(15, 23, 42, 0.06)",
+  boxShadow: "0 8px 18px rgba(15, 23, 42, 0.04)",
   display: "inline-flex",
   alignItems: "center",
   justifyContent: "center",
@@ -61,18 +64,18 @@ export const Icon = ({ d, size = 18, stroke = "currentColor", fill = "none", str
 
 export const Badge = ({ children, color = "green" }) => {
   const colors = {
-    green: { bg: "#ecfdf5", text: "#065f46", border: "#a7f3d0", dot: "#10b981" },
-    yellow: { bg: "#fffbeb", text: "#92400e", border: "#fed7aa", dot: "#f59e0b" },
-    red: { bg: "#fef2f2", text: "#7f1d1d", border: "#fecaca", dot: "#ef4444" },
-    blue: { bg: "#eff6ff", text: "#0c2340", border: "#bfdbfe", dot: "#3b82f6" },
-    orange: { bg: "#fff7ed", text: "#9a3412", border: "#fed7aa", dot: "#f97316" },
-    purple: { bg: "#f5f3ff", text: "#5b21b6", border: "#ddd6fe", dot: "#8b5cf6" },
-    teal: { bg: "#f0fdfa", text: "#115e59", border: "#99f6e4", dot: "#14b8a6" },
-    gray: { bg: "#f3f4f6", text: "#374151", border: "#d1d5db", dot: "#6b7280" },
+    green: { bg: "rgba(16,185,129,0.10)", text: "#065f46", border: "rgba(16,185,129,0.18)", dot: "#10b981" },
+    yellow: { bg: "rgba(245,158,11,0.10)", text: "#92400e", border: "rgba(245,158,11,0.18)", dot: "#f59e0b" },
+    red: { bg: "rgba(239,68,68,0.10)", text: "#7f1d1d", border: "rgba(239,68,68,0.18)", dot: "#ef4444" },
+    blue: { bg: "rgba(59,130,246,0.10)", text: "#0c2340", border: "rgba(59,130,246,0.18)", dot: "#3b82f6" },
+    orange: { bg: "rgba(249,115,22,0.10)", text: "#9a3412", border: "rgba(249,115,22,0.18)", dot: "#f97316" },
+    purple: { bg: "rgba(139,92,246,0.10)", text: "#5b21b6", border: "rgba(139,92,246,0.18)", dot: "#8b5cf6" },
+    teal: { bg: "rgba(20,184,166,0.10)", text: "#115e59", border: "rgba(20,184,166,0.18)", dot: "#14b8a6" },
+    gray: { bg: "rgba(107,114,128,0.10)", text: "#374151", border: "rgba(107,114,128,0.18)", dot: "#6b7280" },
   };
   const c = colors[color] || colors.gray;
   return (
-    <span style={{ background: c.bg, color: c.text, padding: "4px 10px", borderRadius: 999, fontSize: 11, fontWeight: 600, letterSpacing: 0.2, display: "inline-flex", alignItems: "center", gap: 6, whiteSpace: "nowrap", border: `1px solid ${c.border}` }}>
+    <span style={{ background: c.bg, color: c.text, padding: "4px 10px", borderRadius: 999, fontSize: 11, fontWeight: 600, letterSpacing: 0.2, display: "inline-flex", alignItems: "center", gap: 6, whiteSpace: "nowrap", border: `1px solid ${c.border}`, backdropFilter: "blur(8px)" }}>
       {c.dot && <span style={{ width: 6, height: 6, borderRadius: "50%", background: c.dot, flexShrink: 0 }} />}
       {children}
     </span>
@@ -80,24 +83,26 @@ export const Badge = ({ children, color = "green" }) => {
 };
 
 export const StatCard = ({ icon, label, value, sub, subColor = "#10b981", highlight }) => {
-  const bgColor = highlight ? "linear-gradient(135deg, #fef2f2 0%, #fef9f3 100%)" : "linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%)";
-  const borderColor = highlight ? "#fde2e2" : "#e5e7eb";
-  const iconBg = highlight ? "#fee2e2" : "#e5e7eb";
-  const iconColor = highlight ? "#dc2626" : "#6366f1";
+  const bgColor = highlight
+    ? "linear-gradient(145deg, rgba(255,248,247,0.96) 0%, rgba(255,255,255,0.88) 100%)"
+    : "linear-gradient(145deg, rgba(255,255,255,0.94) 0%, rgba(247,250,255,0.88) 100%)";
+  const borderColor = highlight ? "rgba(252, 165, 165, 0.35)" : "rgba(219, 231, 255, 0.95)";
+  const iconBg = highlight ? "rgba(252, 165, 165, 0.18)" : "rgba(37, 99, 235, 0.10)";
+  const iconColor = highlight ? "#dc2626" : "#2563eb";
   return (
-    <div style={{ background: bgColor, border: `1px solid ${borderColor}`, borderRadius: 12, padding: "16px 18px", flex: 1, minWidth: 150, transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)", cursor: "pointer", boxShadow: "0 1px 3px rgba(0, 0, 0, 0.05)" }}>
+    <div style={{ background: bgColor, border: `1px solid ${borderColor}`, borderRadius: 18, padding: "18px 18px 16px", flex: 1, minWidth: 150, transition: "all 0.25s ease", cursor: "default", boxShadow: "0 12px 28px rgba(15, 23, 42, 0.06)", backdropFilter: "blur(14px)", WebkitBackdropFilter: "blur(14px)" }}>
       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 12 }}>
-        <div style={{ width: 36, height: 36, borderRadius: 8, background: iconBg, display: "flex", alignItems: "center", justifyContent: "center", color: iconColor }}>
+        <div style={{ width: 40, height: 40, borderRadius: 12, background: iconBg, display: "flex", alignItems: "center", justifyContent: "center", color: iconColor, boxShadow: "inset 0 1px 0 rgba(255,255,255,0.65)" }}>
           {icon}
         </div>
         {sub && (
-          <span style={{ fontSize: 12, fontWeight: 700, color: subColor, background: subColor === "#10b981" ? "#ecfdf5" : subColor === "#ef4444" ? "#fef2f2" : "#f3f4f6", padding: "2px 8px", borderRadius: 4, display: "inline-flex", alignItems: "center", gap: 3 }}>
-            {sub.includes("↑") ? "↑" : "↓"} {sub.replace(/[↑↓]/g, "")}
+          <span style={{ fontSize: 11, fontWeight: 700, color: subColor, background: `${subColor}14`, padding: "5px 10px", borderRadius: 999, display: "inline-flex", alignItems: "center", gap: 4, border: `1px solid ${subColor}22`, whiteSpace: "nowrap" }}>
+            {sub}
           </span>
         )}
       </div>
-      <div style={{ fontSize: 11, color: "#6b7280", fontWeight: 600, letterSpacing: 0.4, textTransform: "uppercase", marginBottom: 6 }}>{label}</div>
-      <div style={{ fontSize: 26, fontWeight: 700, color: highlight ? "#991b1b" : "#111827", letterSpacing: -0.6 }}>{value}</div>
+      <div style={{ fontSize: 11, color: "#64748b", fontWeight: 600, letterSpacing: 0.4, textTransform: "uppercase", marginBottom: 8 }}>{label}</div>
+      <div style={{ fontSize: 26, fontWeight: 700, color: highlight ? "#991b1b" : "#0f172a", letterSpacing: -0.6, lineHeight: 1.05 }}>{value}</div>
     </div>
   );
 };
@@ -225,9 +230,8 @@ const sidebarNav = {
     { key: "profile", label: "Profile", icon: sidebarIcons.profile },
   ],
   supplier: [
-    { key: "supplier", label: "Supplier Home", icon: sidebarIcons.customer },
-    { key: "supplied_products", label: "Supplied Products", icon: sidebarIcons.supplied_products },
     { key: "restock_requests", label: "Restock Requests", icon: sidebarIcons.restock_requests },
+    { key: "supplied_products", label: "Supplied Products", icon: sidebarIcons.supplied_products },
     { key: "supply_history", label: "Supply History", icon: sidebarIcons.supply_history },
     { key: "profile", label: "Profile", icon: sidebarIcons.profile },
   ],
@@ -252,22 +256,24 @@ export const Sidebar = ({ active, setPage, onLogout, role }) => {
         flexShrink: 0,
         display: "flex",
         flexDirection: "column",
-        background: "linear-gradient(180deg, #ffffff 0%, #f8fafc 100%)",
+        background: "linear-gradient(180deg, rgba(255,255,255,0.84) 0%, rgba(245,248,255,0.76) 100%)",
         color: "#111827",
-        borderRight: "1px solid #e5e7eb",
-        boxShadow: "2px 0 12px rgba(15, 23, 42, 0.06)",
+        borderRight: "1px solid rgba(219, 231, 255, 0.95)",
+        boxShadow: "2px 0 30px rgba(15, 23, 42, 0.08)",
+        backdropFilter: "blur(18px)",
+        WebkitBackdropFilter: "blur(18px)",
       }}
     >
-      <div style={{ padding: collapsed ? 14 : 20, borderBottom: "1px solid #e5e7eb", background: "linear-gradient(135deg, #f8fbff 0%, #ffffff 100%)" }}>
+      <div style={{ padding: collapsed ? 14 : 20, borderBottom: "1px solid rgba(219, 231, 255, 0.9)", background: "linear-gradient(135deg, rgba(248,251,255,0.94) 0%, rgba(255,255,255,0.9) 100%)" }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: collapsed ? "center" : "space-between", gap: 12 }}>
           {!collapsed && (
             <div style={{ display: "flex", alignItems: "center", gap: 12, minWidth: 0 }}>
-              <div style={{ width: 44, height: 44, borderRadius: "50%", background: APP_ACCENT_GRADIENT, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 14, fontWeight: 800, flexShrink: 0, boxShadow: APP_ACCENT_SHADOW }}>
+              <div style={{ width: 44, height: 44, borderRadius: 14, background: APP_ACCENT_GRADIENT, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 14, fontWeight: 800, flexShrink: 0, boxShadow: APP_ACCENT_SHADOW }}>
                 IP
               </div>
               <div style={{ minWidth: 0 }}>
-                <div style={{ fontSize: 14, fontWeight: 700, color: "#111827", letterSpacing: 0.1 }}>Inventory Pro</div>
-                <div style={{ fontSize: 11, color: "#6b7280", marginTop: 2 }}>{subtitle}</div>
+                <div style={{ fontSize: 14, fontWeight: 700, color: "#0f172a", letterSpacing: 0.1 }}>Inventory Pro</div>
+                <div style={{ fontSize: 11, color: "#64748b", marginTop: 2, fontWeight: 500 }}>{subtitle}</div>
               </div>
             </div>
           )}
@@ -275,27 +281,27 @@ export const Sidebar = ({ active, setPage, onLogout, role }) => {
             type="button"
             onClick={() => setCollapsed((value) => !value)}
             style={{
-              width: 34,
-              height: 34,
-              borderRadius: 10,
-              border: "1px solid #e5e7eb",
-              background: "#fff",
-              color: "#111827",
+              width: 36,
+              height: 36,
+              borderRadius: 12,
+              border: "1px solid rgba(219, 231, 255, 0.95)",
+              background: collapsed ? "linear-gradient(135deg, rgba(239,246,255,0.98) 0%, rgba(255,255,255,0.95) 100%)" : "rgba(255,255,255,0.96)",
+              color: "#1d4ed8",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
               cursor: "pointer",
-              boxShadow: "0 1px 3px rgba(0, 0, 0, 0.04)",
+              boxShadow: collapsed ? "0 10px 20px rgba(37, 99, 235, 0.10)" : "0 1px 3px rgba(15, 23, 42, 0.04)",
               flexShrink: 0,
             }}
             aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
           >
-            <Icon d={collapsed ? "M15 18l-6-6 6-6" : "M9 18l6-6-6-6"} size={14} />
+            <Icon d={collapsed ? "M15 18l-6-6 6-6" : "M9 18l6-6-6-6"} size={14} stroke="#1d4ed8" />
           </button>
         </div>
       </div>
 
-      <nav style={{ padding: collapsed ? 10 : 14, display: "flex", flexDirection: "column", gap: 8, flex: 1, alignItems: collapsed ? "center" : "stretch" }}>
+      <nav style={{ padding: collapsed ? "12px 10px" : "16px 14px", display: "flex", flexDirection: "column", gap: 8, flex: 1, alignItems: collapsed ? "center" : "stretch" }}>
         {items.map((item) => {
           const isActive = active === item.key;
           return (
@@ -305,47 +311,79 @@ export const Sidebar = ({ active, setPage, onLogout, role }) => {
               onClick={() => setPage(item.key)}
               style={{
                 border: "1px solid",
-                borderColor: isActive ? "#dbeafe" : "transparent",
-                borderRadius: 12,
-                padding: collapsed ? "12px" : "12px 14px",
-                width: collapsed ? 52 : "100%",
-                textAlign: collapsed ? "center" : "left",
+                borderColor: isActive ? "rgba(96, 165, 250, 0.22)" : "transparent",
+                borderRadius: 16,
+                padding: collapsed ? "12px 0" : "12px 14px",
+                width: collapsed ? 56 : "100%",
+                minHeight: 50,
+                textAlign: "left",
                 cursor: "pointer",
                 color: isActive ? "#1d4ed8" : "#475569",
-                background: isActive ? "linear-gradient(135deg, rgba(37,99,235,0.12) 0%, rgba(124,58,237,0.12) 100%)" : "transparent",
-                boxShadow: isActive ? "0 4px 14px rgba(92, 88, 255, 0.10)" : "none",
+                background: isActive ? "linear-gradient(135deg, rgba(37,99,235,0.12) 0%, rgba(255,255,255,0.94) 100%)" : "transparent",
+                boxShadow: isActive ? "0 12px 24px rgba(37, 99, 235, 0.12)" : "none",
                 fontSize: 13,
-                fontWeight: isActive ? 700 : 500,
+                fontWeight: isActive ? 700 : 600,
                 letterSpacing: 0.1,
                 display: "flex",
                 alignItems: "center",
                 justifyContent: collapsed ? "center" : "flex-start",
-                gap: collapsed ? 0 : 10,
+                gap: collapsed ? 0 : 12,
+                position: "relative",
+                overflow: "hidden",
+                backdropFilter: isActive ? "blur(8px)" : "none",
               }}
               title={item.label}
             >
-              <Icon d={item.icon} size={16} stroke={isActive ? "#5b49ff" : "#64748b"} />
-              {!collapsed && <span>{item.label}</span>}
+              {isActive && (
+                <span
+                  style={{
+                    position: "absolute",
+                    left: collapsed ? "50%" : 10,
+                    top: "50%",
+                    width: collapsed ? 24 : 5,
+                    height: collapsed ? 24 : 30,
+                    borderRadius: collapsed ? "50%" : 999,
+                    transform: collapsed ? "translate(-50%, -50%)" : "translateY(-50%)",
+                    background: "linear-gradient(180deg, #60a5fa 0%, #2563eb 100%)",
+                    opacity: 0.18,
+                  }}
+                />
+              )}
+              <span
+                style={{
+                  width: 34,
+                  height: 34,
+                  borderRadius: 12,
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  background: isActive ? "rgba(239, 246, 255, 0.9)" : "transparent",
+                  flexShrink: 0,
+                }}
+              >
+                <Icon d={item.icon} size={16} stroke={isActive ? "#1d4ed8" : "#64748b"} />
+              </span>
+              {!collapsed && <span style={{ position: "relative", zIndex: 1 }}>{item.label}</span>}
             </button>
           );
         })}
       </nav>
 
-      <div style={{ padding: collapsed ? 10 : 14, borderTop: "1px solid rgba(255,255,255,0.08)" }}>
+      <div style={{ padding: collapsed ? 12 : 14, borderTop: "1px solid rgba(219, 231, 255, 0.9)", background: "linear-gradient(180deg, rgba(255,255,255,0.92) 0%, rgba(248,251,255,0.86) 100%)" }}>
         <button
           type="button"
           onClick={onLogout}
           style={{
             width: "100%",
-            border: "1px solid #e5e7eb",
-            borderRadius: 12,
+            border: "1px solid rgba(219, 231, 255, 0.95)",
+            borderRadius: 14,
             padding: collapsed ? "11px" : "11px 14px",
-            background: "#fff",
+            background: "linear-gradient(180deg, rgba(255,255,255,0.98) 0%, rgba(248,251,255,0.92) 100%)",
             color: "#b91c1c",
             fontSize: 13,
-            fontWeight: 700,
+            fontWeight: 600,
             cursor: "pointer",
-            boxShadow: "0 1px 3px rgba(0, 0, 0, 0.04)",
+            boxShadow: "0 1px 3px rgba(15, 23, 42, 0.04)",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
