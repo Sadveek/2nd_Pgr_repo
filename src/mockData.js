@@ -17,12 +17,20 @@ const initial = {
     { id: "s_1", companyName: "Acme Electronics", contactName: "Ankit Neupane", email: "ankit@acme.local", phone: "+9779801123456" },
     { id: "s_2", companyName: "Sujal Supplies", contactName: "Sujal", email: "sujal@supplies.local", phone: "+9779814234567" },
     { id: "s_3", companyName: "Govind Hardware", contactName: "Govind", email: "govind@hardware.local", phone: "+9779823345678" },
+<<<<<<< HEAD
+=======
+    { id: "s_4", companyName: "Nepa Office Mart", contactName: "Ramesh Karki", email: "ramesh@nepaoffice.local", phone: "+9779834456789" },
+    { id: "s_5", companyName: "Himalaya Tech", contactName: "Mina Sharma", email: "mina@himalayatech.local", phone: "+9779845567890" },
+    { id: "s_6", companyName: "Everest Logistics", contactName: "Prabin Gurung", email: "prabin@everestlogistics.local", phone: "+9779856678901" },
+    { id: "s_7", companyName: "Blue Ridge Wholesale", contactName: "Sagar Bista", email: "sagar@blueridge.local", phone: "+9779867789012" },
+>>>>>>> testing
   ],
   orders: [],
   transactions: [],
   restockRequests: [],
 };
 
+<<<<<<< HEAD
 function read() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -30,17 +38,75 @@ function read() {
     return JSON.parse(raw);
   } catch (e) {
     return JSON.parse(JSON.stringify(initial));
+=======
+function cloneInitial() {
+  return JSON.parse(JSON.stringify(initial));
+}
+
+function mergeDefaults(data) {
+  const base = cloneInitial();
+  const incoming = data && typeof data === "object" ? data : {};
+  const mergedUsers = Array.isArray(incoming.users) ? [...incoming.users] : [];
+  const mergedSuppliers = Array.isArray(incoming.suppliers) ? [...incoming.suppliers] : [];
+
+  for (const user of base.users) {
+    if (!mergedUsers.some((existing) => existing.id === user.id || existing.email === user.email || existing.username === user.username)) {
+      mergedUsers.push(user);
+    }
+  }
+
+  for (const supplier of base.suppliers) {
+    if (!mergedSuppliers.some((existing) => existing.id === supplier.id || existing.companyName === supplier.companyName)) {
+      mergedSuppliers.push(supplier);
+    }
+  }
+
+  return {
+    ...base,
+    ...incoming,
+    users: mergedUsers,
+    products: Array.isArray(incoming.products) ? incoming.products : base.products,
+    suppliers: mergedSuppliers,
+    orders: Array.isArray(incoming.orders) ? incoming.orders : base.orders,
+    transactions: Array.isArray(incoming.transactions) ? incoming.transactions : base.transactions,
+    restockRequests: Array.isArray(incoming.restockRequests) ? incoming.restockRequests : base.restockRequests,
+  };
+}
+
+function read() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return cloneInitial();
+    const parsed = JSON.parse(raw);
+    const merged = mergeDefaults(parsed);
+    if (JSON.stringify(merged) !== raw) {
+      write(merged);
+    }
+    return merged;
+  } catch (e) {
+    return cloneInitial();
+>>>>>>> testing
   }
 }
 
 function write(data) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+<<<<<<< HEAD
+=======
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new Event("inventory-db-changed"));
+  }
+>>>>>>> testing
 }
 
 export default {
   read,
   write,
   reset() {
+<<<<<<< HEAD
     write(initial);
+=======
+    write(cloneInitial());
+>>>>>>> testing
   },
 };

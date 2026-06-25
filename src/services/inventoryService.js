@@ -1,4 +1,8 @@
 import mockData from "../mockData";
+<<<<<<< HEAD
+=======
+import restockService from "./restockService";
+>>>>>>> testing
 
 export default {
   getStock: async (productId) => {
@@ -15,6 +19,10 @@ export default {
     else if (p.quantity < 20) p.status = "low_stock";
     else p.status = "in_stock";
     mockData.write(db);
+<<<<<<< HEAD
+=======
+    await restockService.syncCriticalRequests();
+>>>>>>> testing
     return p;
   },
   lowStock: async (threshold = 20) => {
