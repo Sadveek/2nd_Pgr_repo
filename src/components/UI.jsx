@@ -4,6 +4,14 @@ export const APP_FONT_STACK = '"Segoe UI", system-ui, -apple-system, BlinkMacSys
 export const APP_ACCENT_GRADIENT = "linear-gradient(135deg, #2563eb 0%, #7c3aed 100%)";
 export const APP_ACCENT_SHADOW = "0 10px 22px rgba(92, 88, 255, 0.18)";
 export const APP_PAGE_BACKGROUND = "radial-gradient(circle at top left, rgba(37, 99, 235, 0.10), transparent 32%), radial-gradient(circle at top right, rgba(124, 58, 237, 0.08), transparent 28%), linear-gradient(145deg, #eef4ff 0%, #f7faff 52%, #edf2ff 100%)";
+export const APP_PAGE_TITLE_STYLE = {
+  margin: 0,
+  fontSize: 26,
+  fontWeight: 800,
+  lineHeight: 1.08,
+  letterSpacing: -0.2,
+  color: "#0f172a",
+};
 export const APP_PANEL_STYLE = {
   background: "linear-gradient(180deg, rgba(255,255,255,0.94) 0%, rgba(248,251,255,0.88) 100%)",
   backdropFilter: "blur(16px)",
@@ -54,6 +62,26 @@ export const APP_CONTROL_BUTTON_STYLE = {
   gap: 8,
   whiteSpace: "nowrap",
   transition: "transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease",
+};
+
+export const APP_PRIMARY_ACTION_BUTTON_STYLE = {
+  ...APP_CONTROL_BUTTON_STYLE,
+  borderRadius: 999,
+  border: "1px solid #6d5efc",
+  background: APP_ACCENT_GRADIENT,
+  color: "#fff",
+  fontWeight: 700,
+  boxShadow: APP_ACCENT_SHADOW,
+};
+
+export const APP_SECONDARY_ACTION_BUTTON_STYLE = {
+  ...APP_CONTROL_BUTTON_STYLE,
+  borderRadius: 999,
+  border: "1px solid rgba(191, 219, 254, 0.95)",
+  background: "linear-gradient(180deg, #f8fbff 0%, #eff6ff 100%)",
+  color: "#1d4ed8",
+  fontWeight: 700,
+  boxShadow: "0 8px 18px rgba(37, 99, 235, 0.08)",
 };
 
 export const Icon = ({ d, size = 18, stroke = "currentColor", fill = "none", strokeWidth = 1.8 }) => (
@@ -129,7 +157,7 @@ export const ThemeSelect = ({ label, value, onChange, options = [], placeholder 
   }, [disabled]);
 
   return (
-    <div ref={wrapperRef} style={{ display: "grid", gap: 6, position: "relative" }}>
+    <div ref={wrapperRef} style={{ display: "grid", gap: 6, position: "relative", zIndex: open ? 40 : "auto", overflow: "visible" }}>
       {label ? <label style={{ fontSize: 13, fontWeight: 700, color: "#374151" }}>{label}</label> : null}
       <button
         type="button"
@@ -158,7 +186,7 @@ export const ThemeSelect = ({ label, value, onChange, options = [], placeholder 
             top: label ? 66 : 46,
             left: 0,
             right: 0,
-            zIndex: 30,
+            zIndex: 80,
             borderRadius: 16,
             border: "1px solid #cbd5e1",
             background: "#fff",

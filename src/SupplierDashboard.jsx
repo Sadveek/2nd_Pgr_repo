@@ -11,6 +11,8 @@ import {
   APP_ACCENT_GRADIENT,
   APP_ACCENT_SHADOW,
   APP_PANEL_STYLE,
+  APP_PAGE_TITLE_STYLE,
+  APP_SECONDARY_ACTION_BUTTON_STYLE,
   ThemeSelect,
 } from "./components/UI";
 import dashboardService from "./services/dashboardService";
@@ -19,6 +21,11 @@ import productService from "./services/productService";
 import supplierService from "./services/supplierService";
 
 const ITEMS_PER_PAGE = 8;
+const SEARCH_INPUT_MAX_LENGTH = 80;
+const sanitizeSearchInput = (value) => String(value || "").split("").filter((char) => {
+  const code = char.charCodeAt(0);
+  return code >= 32 && code !== 127;
+}).join("");
 
 const icons = {
   truck: "M1 3h15v13H1zM16 8h4l3 3v5h-7V8zM5.5 19a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zM18.5 19a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z",
@@ -41,7 +48,7 @@ const icons = {
 const PageHeader = ({ title, subtitle, actions }) => (
   <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 16, marginBottom: 20, flexWrap: "wrap" }}>
     <div style={{ minWidth: 0 }}>
-      <h1 style={{ margin: 0, fontSize: 26, fontWeight: 800, lineHeight: 1.08, letterSpacing: -0.3, color: "#0f172a" }}>{title}</h1>
+      <h1 style={APP_PAGE_TITLE_STYLE}>{title}</h1>
       {subtitle ? <p style={{ margin: "8px 0 0", color: "#64748b", fontSize: 13, fontWeight: 400, lineHeight: 1.6, maxWidth: 720 }}>{subtitle}</p> : null}
     </div>
     {actions ? <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>{actions}</div> : null}
@@ -424,7 +431,7 @@ const SupplierDashboard = ({ page = "restock_requests", revenueModeEnabled, onTo
           ]}
         />
 
-        <Panel>
+        <Panel style={{ position: "relative", zIndex: 3, overflow: "visible" }}>
           <div style={{ display: "grid", gridTemplateColumns: "1.6fr repeat(2, minmax(140px, 1fr))", gap: 12, alignItems: "center" }}>
             <div style={{ position: "relative" }}>
               <span style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "#111827" }}>
@@ -434,7 +441,9 @@ const SupplierDashboard = ({ page = "restock_requests", revenueModeEnabled, onTo
                 type="text"
                 placeholder="Search SKU, product, category, or supplier"
                 value={productQuery}
-                onChange={(event) => setProductQuery(event.target.value)}
+                onChange={(event) => setProductQuery(sanitizeSearchInput(event.target.value).slice(0, SEARCH_INPUT_MAX_LENGTH))}
+                maxLength={SEARCH_INPUT_MAX_LENGTH}
+                aria-label="Search supplied products"
                 style={{ ...APP_CONTROL_INPUT_STYLE, paddingLeft: 38 }}
               />
             </div>
@@ -484,7 +493,7 @@ const SupplierDashboard = ({ page = "restock_requests", revenueModeEnabled, onTo
           <StatCard icon={<Icon d={icons.alert} />} label="Critical Requests" value={String(filteredRequests.filter((request) => priorityTone(request.priority) === "red").length || 0)} sub="Immediate action" subColor="#ef4444" highlight />
         </div>
 
-        <Panel>
+        <Panel style={{ position: "relative", zIndex: 3, overflow: "visible" }}>
           <div style={{ display: "grid", gridTemplateColumns: "1.4fr repeat(2, minmax(140px, 1fr)) auto", gap: 12, alignItems: "center" }}>
             <div style={{ position: "relative" }}>
               <span style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "#111827" }}>
@@ -494,7 +503,9 @@ const SupplierDashboard = ({ page = "restock_requests", revenueModeEnabled, onTo
                 type="text"
                 placeholder="Search request ID, product, supplier, or reason"
                 value={requestQuery}
-                onChange={(event) => setRequestQuery(event.target.value)}
+                onChange={(event) => setRequestQuery(sanitizeSearchInput(event.target.value).slice(0, SEARCH_INPUT_MAX_LENGTH))}
+                maxLength={SEARCH_INPUT_MAX_LENGTH}
+                aria-label="Search requests"
                 style={{ ...APP_CONTROL_INPUT_STYLE, paddingLeft: 38 }}
               />
             </div>
@@ -526,10 +537,10 @@ const SupplierDashboard = ({ page = "restock_requests", revenueModeEnabled, onTo
                 setRequestStatus("all");
                 setRequestRange("all");
               }}
-              style={APP_CONTROL_BUTTON_STYLE}
-            >
-              Reset
-            </button>
+            style={APP_SECONDARY_ACTION_BUTTON_STYLE}
+          >
+            Reset
+          </button>
           </div>
         </Panel>
 

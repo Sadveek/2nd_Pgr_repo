@@ -16,6 +16,9 @@ import {
   APP_PANEL_STYLE,
   APP_CONTROL_INPUT_STYLE,
   APP_CONTROL_BUTTON_STYLE,
+  APP_PRIMARY_ACTION_BUTTON_STYLE,
+  APP_SECONDARY_ACTION_BUTTON_STYLE,
+  APP_PAGE_TITLE_STYLE,
   ThemeSelect,
   Pagination,
 } from "./components/UI";
@@ -53,6 +56,9 @@ const icons = {
 
 const ITEMS_PER_PAGE = 100;
 const formatRs = (amount, digits = 2) => `Rs. ${Number(amount || 0).toLocaleString(undefined, { minimumFractionDigits: digits, maximumFractionDigits: digits })}`;
+const sanitizeProductName = (value) => String(value || "")
+  .replace(/[^a-zA-Z0-9 ]/g, "")
+  .replace(/\s{2,}/g, " ");
 
 // Shared UI components are imported from ./components/UI
 
@@ -245,13 +251,10 @@ const SearchableSelect = ({ label, placeholder = "Search...", value, onChange, o
   );
 };
 
-const TopBar = ({ title, subtitle, onRefresh }) => (
+const TopBar = ({ onRefresh }) => (
   <header style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, padding: "16px 24px", borderBottom: "1px solid rgba(219, 231, 255, 0.95)", background: "linear-gradient(135deg, rgba(238,244,255,0.98) 0%, rgba(255,255,255,0.92) 48%, rgba(237,242,255,0.96) 100%)", flexShrink: 0, boxShadow: "0 1px 3px rgba(15, 23, 42, 0.05)", backdropFilter: "blur(10px)", WebkitBackdropFilter: "blur(10px)" }}>
-    <div style={{ minWidth: 0 }}>
-      <div style={{ fontWeight: 800, color: "#0f172a", fontSize: 15, letterSpacing: 0.1, lineHeight: 1.2 }}>{title || "Inventory Pro"}</div>
-      <div style={{ marginTop: 4, color: "#64748b", fontSize: 12, fontWeight: 500 }}>{subtitle || "Live inventory portal"}</div>
-    </div>
-    <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+    <div style={{ minWidth: 0 }} />
+    <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginLeft: "auto" }}>
       <span style={{ padding: "8px 12px", borderRadius: 999, border: "1px solid rgba(37, 99, 235, 0.16)", background: "rgba(37, 99, 235, 0.08)", color: "#1d4ed8", fontSize: 11, fontWeight: 800, letterSpacing: 0.4, textTransform: "uppercase" }}>
         Auto sync on
       </span>
@@ -486,7 +489,7 @@ const DashboardPage = () => {
     <div style={{ flex: 1, overflowY: "auto", padding: "20px 24px", background: APP_PAGE_BACKGROUND, fontFamily: APP_FONT_STACK }}>
       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 20 }}>
         <div>
-          <h1 style={{ margin: 0, fontSize: 24, fontWeight: 700, lineHeight: 1.08, letterSpacing: -0.2, color: "#111827" }}>Dashboard Overview</h1>
+          <h1 style={APP_PAGE_TITLE_STYLE}>Dashboard Overview</h1>
           <p style={{ margin: "6px 0 0", color: "#6b7280", fontSize: 13, fontWeight: 400 }}>Real-time inventory status and key metrics</p>
         </div>
       </div>
@@ -635,12 +638,12 @@ const DashboardPage = () => {
             <tbody>
               {rows.map((row, idx) => (
                 <tr key={row.id} style={{ borderBottom: "1px solid #e5e7eb", transition: "all 0.2s ease", background: idx % 2 === 0 ? "#f9fafb" : "#fff" }} onMouseEnter={(e) => { e.currentTarget.style.background = "#f3f4f6"; }} onMouseLeave={(e) => { e.currentTarget.style.background = idx % 2 === 0 ? "#f9fafb" : "#fff"; }}>
-                  <td style={{ padding: "12px", color: "#2563eb", fontWeight: 600 }}>{row.id}</td>
+                  <td style={{ padding: "12px", color: "#2563eb", fontWeight: 500 }}>{row.id}</td>
                   <td style={{ padding: "12px", fontWeight: 500 }}>{row.name}</td>
                   <td style={{ padding: "12px", color: "#6b7280" }}>{row.date}</td>
                   <td style={{ padding: "12px" }}>{row.qty}</td>
                   <td style={{ padding: "12px" }}><Badge color={row.statusColor}>{row.status}</Badge></td>
-                  <td style={{ padding: "12px", fontWeight: 700 }}>{row.amount}</td>
+                  <td style={{ padding: "12px", fontWeight: 500 }}>{row.amount}</td>
                 </tr>
               ))}
             </tbody>
@@ -791,7 +794,7 @@ const ProductsPage = ({ role = "admin" }) => {
     if (!dialog?.type) return;
     try {
       if (dialog.type === "add-product") {
-        const name = dialogForm.name.trim();
+        const name = sanitizeProductName(dialogForm.name).trim();
         if (!name) {
           alert("Product name is required.");
           return;
@@ -852,24 +855,18 @@ const ProductsPage = ({ role = "admin" }) => {
     <div style={{ flex: 1, overflowY: "auto", padding: "20px 24px", background: APP_PAGE_BACKGROUND }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 20 }}>
         <div>
-          <h1 style={{ margin: 0, fontSize: 24, fontWeight: 700, lineHeight: 1.08, letterSpacing: -0.2, color: "#111827" }}>{canEdit ? "Product Management" : "Product Catalog"}</h1>
+          <h1 style={APP_PAGE_TITLE_STYLE}>{canEdit ? "Product Management" : "Product Catalog"}</h1>
           <p style={{ margin: "6px 0 0", color: "#6b7280", fontSize: 13 }}>
             {canEdit ? "Manage and track your complete inventory in real-time" : "View the live inventory catalog. Stock data stays synced with the admin portal."}
           </p>
         </div>
         {canEdit ? (
           <div style={{ display: 'flex', gap: 8, flexWrap: "wrap" }}>
-            <button onClick={handleAdd} style={{ padding: "11px 16px", borderRadius: 10, border: "1px solid #111827", background: "#fff", cursor: "pointer", fontWeight: 600, color: "#111827", letterSpacing: 0, boxShadow: "0 1px 2px rgba(15, 23, 42, 0.04)" }}>Add Product</button>
+            <button onClick={handleAdd} style={APP_PRIMARY_ACTION_BUTTON_STYLE}>Add Product</button>
             <button
               onClick={() => setEditMode((value) => !value)}
               style={{
-                padding: "10px 14px",
-                borderRadius: 10,
-                border: "1px solid #111827",
-                background: editMode ? "#111827" : "#fff",
-                cursor: "pointer",
-                fontWeight: 600,
-                color: editMode ? "#fff" : "#111827",
+                ...(editMode ? APP_PRIMARY_ACTION_BUTTON_STYLE : APP_SECONDARY_ACTION_BUTTON_STYLE),
               }}
             >
               {editMode ? "Exit Edit Mode" : "Edit Mode"}
@@ -877,7 +874,7 @@ const ProductsPage = ({ role = "admin" }) => {
           </div>
         ) : null}
       </div>
-      <div style={{ ...APP_PANEL_STYLE, padding: 20, marginBottom: 20 }}>
+      <div style={{ ...APP_PANEL_STYLE, padding: 20, marginBottom: 20, position: "relative", zIndex: 3, overflow: "visible" }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginBottom: 14, flexWrap: "wrap" }}>
           <div>
             <div style={{ fontSize: 12, color: "#2563eb", fontWeight: 800, letterSpacing: 0.4, textTransform: "uppercase" }}>Filter inventory</div>
@@ -921,7 +918,7 @@ const ProductsPage = ({ role = "admin" }) => {
               setCategoryFilter("all");
               setStockFilter("all");
             }}
-            style={APP_CONTROL_BUTTON_STYLE}
+            style={APP_SECONDARY_ACTION_BUTTON_STYLE}
           >
             Reset Filters
           </button>
@@ -996,14 +993,14 @@ const ProductsPage = ({ role = "admin" }) => {
                   <tr key={p.id} style={{ borderBottom: "1px solid rgba(226, 232, 240, 0.9)", transition: "background 0.2s ease", background: idx % 2 === 0 ? "#fff" : "#f8fbff" }} onMouseEnter={(e) => { e.currentTarget.style.background = "#eef4ff"; }} onMouseLeave={(e) => { e.currentTarget.style.background = idx % 2 === 0 ? "#fff" : "#f8fbff"; }}>
                     {canEdit ? (
                       <>
-                        <td style={{ padding: "14px 16px", fontWeight: 700, color: "#111827", fontSize: 12, overflow: "hidden", textOverflow: "ellipsis" }}>{p.sku || "-"}</td>
+                        <td style={{ padding: "14px 16px", fontWeight: 500, color: "#111827", fontSize: 12, overflow: "hidden", textOverflow: "ellipsis" }}>{p.sku || "-"}</td>
                         <td style={{ padding: "14px 16px" }}>
                           <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
-                            <div style={{ width: 36, height: 36, background: "#f3f4f6", borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center", color: "#111827", fontWeight: 700, fontSize: 12, flexShrink: 0 }}>
+                            <div style={{ width: 36, height: 36, background: "#f3f4f6", borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center", color: "#111827", fontWeight: 600, fontSize: 12, flexShrink: 0 }}>
                               {p.sku ? p.sku.slice(0, 1) : "P"}
                             </div>
                             <div style={{ minWidth: 0, maxWidth: 260 }}>
-                              <div style={{ fontWeight: 700, color: "#111827", lineHeight: 1.25, whiteSpace: "normal", wordBreak: "break-word" }}>{p.name}</div>
+                              <div style={{ fontWeight: 600, color: "#111827", lineHeight: 1.25, whiteSpace: "normal", wordBreak: "break-word" }}>{p.name}</div>
                             </div>
                           </div>
                         </td>
@@ -1023,7 +1020,7 @@ const ProductsPage = ({ role = "admin" }) => {
                             </span>
                           )}
                         </td>
-                        <td style={{ padding: "14px 16px", fontWeight: 700, color: "#111827", whiteSpace: "nowrap" }}>{formatRs(p.price)}</td>
+                        <td style={{ padding: "14px 16px", fontWeight: 500, color: "#111827", whiteSpace: "nowrap" }}>{formatRs(p.price)}</td>
                         <td style={{ padding: "14px 16px" }}>
                           <div style={{ display: "flex", flexDirection: "column", gap: 3, minWidth: 0 }}>
                             <span style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 11, fontWeight: 700, color: stockColor === "red" ? "#b91c1c" : stockColor === "yellow" ? "#b45309" : "#047857", padding: "3px 8px", borderRadius: 999, border: `1px solid ${stockColor === "red" ? "#fecaca" : stockColor === "yellow" ? "#fed7aa" : "#a7f3d0"}`, background: stockColor === "red" ? "#fef2f2" : stockColor === "yellow" ? "#fffbeb" : "#ecfdf5", width: "fit-content" }}>
@@ -1047,13 +1044,13 @@ const ProductsPage = ({ role = "admin" }) => {
                       </>
                     ) : (
                       <>
-                        <td style={{ padding: "14px 16px", fontWeight: 700, color: "#111827" }}>{p.name}</td>
+                        <td style={{ padding: "14px 16px", fontWeight: 600, color: "#111827" }}>{p.name}</td>
                         <td style={{ padding: "14px 16px" }}>
                           <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
                             <span style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 11, fontWeight: 700, color: stockColor === "red" ? "#b91c1c" : stockColor === "yellow" ? "#b45309" : "#047857", padding: "3px 8px", borderRadius: 999, border: `1px solid ${stockColor === "red" ? "#fecaca" : stockColor === "yellow" ? "#fed7aa" : "#a7f3d0"}`, background: stockColor === "red" ? "#fef2f2" : stockColor === "yellow" ? "#fffbeb" : "#ecfdf5", width: "fit-content" }}>
                               {stockLabel}
                             </span>
-                            <span style={{ fontSize: 12, color: "#6b7280", fontWeight: 600 }}>{Number(p.quantity || 0).toLocaleString()} units</span>
+                            <span style={{ fontSize: 12, color: "#6b7280", fontWeight: 500 }}>{Number(p.quantity || 0).toLocaleString()} units</span>
                           </div>
                         </td>
                       </>
@@ -1105,7 +1102,14 @@ const ProductsPage = ({ role = "admin" }) => {
               <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 14 }}>
                 <div style={{ display: "grid", gap: 6 }}>
                   <label style={{ fontSize: 13, fontWeight: 700, color: "#374151" }}>Product name</label>
-                  <input value={dialogForm.name || ""} onChange={(event) => setDialogForm((current) => ({ ...current, name: event.target.value }))} style={APP_CONTROL_INPUT_STYLE} placeholder="Enter a product name" />
+                  <input
+                    value={dialogForm.name || ""}
+                    onChange={(event) => setDialogForm((current) => ({ ...current, name: sanitizeProductName(event.target.value).slice(0, 80) }))}
+                    style={APP_CONTROL_INPUT_STYLE}
+                    placeholder="Enter a product name"
+                    maxLength={80}
+                    aria-label="Product name"
+                  />
                 </div>
                 <div style={{ display: "grid", gap: 6 }}>
                   <label style={{ fontSize: 13, fontWeight: 700, color: "#374151" }}>SKU</label>
@@ -1329,21 +1333,15 @@ const SuppliersPage = () => {
     <div style={{ flex: 1, overflowY: "auto", padding: "20px 24px", background: APP_PAGE_BACKGROUND }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 20 }}>
         <div>
-          <h1 style={{ margin: 0, fontSize: 24, fontWeight: 700, lineHeight: 1.08, letterSpacing: -0.2, color: "#111827" }}>Supplier Directory</h1>
+          <h1 style={APP_PAGE_TITLE_STYLE}>Supplier Directory</h1>
           <p style={{ margin: "6px 0 0", color: "#6b7280", fontSize: 13, fontWeight: 400 }}>Manage and monitor your global network of wholesale partners</p>
         </div>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          <button onClick={handleAddSupplier} style={{ padding: "11px 16px", borderRadius: 10, border: "1px solid #111827", background: "#fff", cursor: "pointer", fontWeight: 600, color: "#111827", letterSpacing: 0, boxShadow: "0 1px 2px rgba(15, 23, 42, 0.04)" }}>Add Supplier</button>
+          <button onClick={handleAddSupplier} style={APP_PRIMARY_ACTION_BUTTON_STYLE}>Add Supplier</button>
           <button
             onClick={() => setEditMode((value) => !value)}
             style={{
-              padding: "10px 14px",
-              borderRadius: 10,
-              border: "1px solid #111827",
-              background: editMode ? "#111827" : "#fff",
-              cursor: "pointer",
-              fontWeight: 600,
-              color: editMode ? "#fff" : "#111827",
+              ...(editMode ? APP_PRIMARY_ACTION_BUTTON_STYLE : APP_SECONDARY_ACTION_BUTTON_STYLE),
             }}
           >
             {editMode ? "Exit Edit Mode" : "Edit Mode"}
@@ -1364,7 +1362,7 @@ const SuppliersPage = () => {
           </div>
         ))}
       </div>
-      <div style={{ ...APP_PANEL_STYLE, padding: 20, marginBottom: 20 }}>
+      <div style={{ ...APP_PANEL_STYLE, padding: 20, marginBottom: 20, position: "relative", zIndex: 3, overflow: "visible" }}>
         <div style={{ display: "grid", gridTemplateColumns: "1.5fr repeat(2, minmax(150px, 1fr)) auto", gap: 12, alignItems: "center" }}>
           <div style={{ position: "relative" }}>
             <span style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "#9ca3af" }}><Icon d={icons.search} size={14} /></span>
@@ -1390,7 +1388,7 @@ const SuppliersPage = () => {
               setSearchQuery("");
               setCategoryFilter("all");
             }}
-            style={{ ...APP_CONTROL_BUTTON_STYLE, border: "1px solid #dbeafe", background: "linear-gradient(135deg, #eff6ff 0%, #ffffff 100%)", color: "#1d4ed8" }}
+            style={APP_SECONDARY_ACTION_BUTTON_STYLE}
           >
             Reset Filters
           </button>
@@ -1418,7 +1416,7 @@ const SuppliersPage = () => {
                   <td style={{ padding: "14px 16px" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                       <div style={{ width: 36, height: 36, borderRadius: "50%", background: "#f3f4f6", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 600, color: "#111827" }}>{s.abbr}</div>
-                      <span style={{ fontWeight: 600, color: "#111827" }}>{s.name}</span>
+                      <span style={{ fontWeight: 500, color: "#111827" }}>{s.name}</span>
                     </div>
                   </td>
                   <td style={{ padding: "14px 16px", color: "#6b7280" }}>{s.category}</td>
@@ -1604,7 +1602,7 @@ const SalesPage = () => {
     <div style={{ flex: 1, overflowY: "auto", padding: "20px 24px", background: APP_PAGE_BACKGROUND }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 20 }}>
         <div>
-          <h1 style={{ margin: 0, fontSize: 24, fontWeight: 700, lineHeight: 1.08, letterSpacing: -0.2, color: "#111827" }}>Sales Records</h1>
+          <h1 style={APP_PAGE_TITLE_STYLE}>Sales Records</h1>
           <p style={{ margin: "6px 0 0", color: "#6b7280", fontSize: 13, fontWeight: 400 }}>Track and analyze every transaction in real-time</p>
         </div>
       </div>
@@ -1652,7 +1650,7 @@ const SalesPage = () => {
               setSearchQuery("");
               setStatusFilter("all");
             }}
-            style={{ ...APP_CONTROL_BUTTON_STYLE, border: "1px solid #dbeafe", background: "linear-gradient(135deg, #eff6ff 0%, #ffffff 100%)", color: "#1d4ed8" }}
+            style={APP_SECONDARY_ACTION_BUTTON_STYLE}
           >
             Reset Filters
           </button>
@@ -1674,15 +1672,15 @@ const SalesPage = () => {
             <tbody>
               {visibleRows.map((row, idx) => (
                 <tr key={row.id} style={{ borderBottom: "1px solid #e5e7eb", transition: "all 0.2s ease", background: idx % 2 === 0 ? "#f9fafb" : "#fff" }} onMouseEnter={(e) => { e.currentTarget.style.background = "#f3f4f6"; }} onMouseLeave={(e) => { e.currentTarget.style.background = idx % 2 === 0 ? "#f9fafb" : "#fff"; }}>
-                  <td style={{ padding: "14px 16px", color: "#2563eb", fontWeight: 700 }}>{row.id}</td>
+                  <td style={{ padding: "14px 16px", color: "#2563eb", fontWeight: 500 }}>{row.id}</td>
                   <td style={{ padding: "14px 16px" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                      <div style={{ width: 32, height: 32, borderRadius: "50%", background: "linear-gradient(135deg, #e0e7ff 0%, #c7d7fd 100%)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 800, color: "#2563eb" }}>{row.avatar}</div>
+                      <div style={{ width: 32, height: 32, borderRadius: "50%", background: "linear-gradient(135deg, #e0e7ff 0%, #c7d7fd 100%)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, color: "#2563eb" }}>{row.avatar}</div>
                       <span style={{ fontWeight: 500, color: "#111827" }}>{row.name}</span>
                     </div>
                   </td>
                   <td style={{ padding: "14px 16px", color: "#6b7280", fontSize: 12 }}>{row.date}</td>
-                  <td style={{ padding: "14px 16px", fontWeight: 700, color: "#111827" }}>{row.amount}</td>
+                  <td style={{ padding: "14px 16px", fontWeight: 500, color: "#111827" }}>{row.amount}</td>
                   <td style={{ padding: "14px 16px" }}><Badge color={row.statusColor}>{row.status}</Badge></td>
                   <td style={{ padding: "14px 16px" }}>
                     <button style={{ background: "none", border: "none", cursor: "pointer", color: "#d1d5db", fontSize: 18, padding: 0, transition: "color 0.2s ease" }} onMouseEnter={(e) => e.target.style.color = "#6b7280"} onMouseLeave={(e) => e.target.style.color = "#d1d5db"}>⋮</button>
@@ -1743,7 +1741,7 @@ const ReportsPage = () => {
     <div style={{ flex: 1, overflowY: "auto", padding: "20px 24px", background: APP_PAGE_BACKGROUND }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 20 }}>
         <div>
-          <h1 style={{ margin: 0, fontSize: 24, fontWeight: 700, lineHeight: 1.08, letterSpacing: -0.2, color: "#111827" }}>Reports & Analytics</h1>
+          <h1 style={APP_PAGE_TITLE_STYLE}>Reports & Analytics</h1>
           <p style={{ margin: "6px 0 0", color: "#6b7280", fontSize: 13 }}>Comprehensive operational performance reports</p>
         </div>
       </div>
@@ -1812,14 +1810,14 @@ const ReportsPage = () => {
             <tbody>
               {visibleReportRows.map((r, idx) => (
                 <tr key={r.id} style={{ borderBottom: "1px solid #e5e7eb", transition: "all 0.2s ease", background: idx % 2 === 0 ? "#f9fafb" : "#fff" }} onMouseEnter={(e) => { e.currentTarget.style.background = "#f3f4f6"; }} onMouseLeave={(e) => { e.currentTarget.style.background = idx % 2 === 0 ? "#f9fafb" : "#fff"; }}>
-                  <td style={{ padding: "14px 16px", fontWeight: 700, color: "#2563eb" }}>{r.id}</td>
+                  <td style={{ padding: "14px 16px", fontWeight: 500, color: "#2563eb" }}>{r.id}</td>
                   <td style={{ padding: "14px 16px" }}>
-                    <div style={{ fontWeight: 700, color: "#111827" }}>{r.product}</div>
+                    <div style={{ fontWeight: 500, color: "#111827" }}>{r.product}</div>
                     <div style={{ fontSize: 12, color: "#9ca3af" }}>{r.sku}</div>
                   </td>
                   <td style={{ padding: "14px 16px", color: "#6b7280" }}>{r.date}</td>
                   <td style={{ padding: "14px 16px", color: "#6b7280" }}>{r.supplier}</td>
-                  <td style={{ padding: "14px 16px", fontWeight: 600, color: "#111827" }}>{Number(r.quantity || 0).toLocaleString()}</td>
+                  <td style={{ padding: "14px 16px", fontWeight: 500, color: "#111827" }}>{Number(r.quantity || 0).toLocaleString()}</td>
                   <td style={{ padding: "14px 16px", color: "#6b7280" }}>{r.reason}</td>
                   <td style={{ padding: "14px 16px" }}><Badge color={r.statusColor}>{r.status}</Badge></td>
                 </tr>
@@ -1840,8 +1838,8 @@ const ReportsPage = () => {
 
 // ─── Role-specific placeholder pages ─────────────────────────────────────────
 const PurchaseHistoryPage = () => (
-  <div style={{ flex: 1, overflowY: "auto", padding: "20px 24px", background: APP_PAGE_BACKGROUND }}>
-    <h1 style={{ fontSize: 22, fontWeight: 700, lineHeight: 1.08, letterSpacing: -0.2 }}>Purchase History</h1>
+    <div style={{ flex: 1, overflowY: "auto", padding: "20px 24px", background: APP_PAGE_BACKGROUND }}>
+    <h1 style={APP_PAGE_TITLE_STYLE}>Purchase History</h1>
     <p style={{ color: "#6b7280", fontWeight: 400 }}>All purchases made by the customer.</p>
     <div style={{ marginTop: 12, background: "#fff", borderRadius: 12, padding: 16, border: "1px solid #e5e7eb" }}>
       <table style={{ width: "100%", borderCollapse: "collapse" }}>
@@ -1849,8 +1847,8 @@ const PurchaseHistoryPage = () => (
           <tr style={{ textAlign: "left", color: "#9ca3af" }}><th style={{ padding: 8 }}>Order</th><th>Item</th><th>Date</th><th>Amount</th></tr>
         </thead>
         <tbody>
-          <tr><td style={{ padding: 8 }}>#ORD-1001</td><td>Wireless Keyboard Pro</td><td>May 12, 2024</td><td style={{ fontWeight: 700 }}>Rs. 129.00</td></tr>
-          <tr style={{ background: "#f9fafb" }}><td style={{ padding: 8 }}>#ORD-1002</td><td>Ergonomic Office Chair</td><td>May 09, 2024</td><td style={{ fontWeight: 700 }}>Rs. 499.98</td></tr>
+          <tr><td style={{ padding: 8 }}>#ORD-1001</td><td>Wireless Keyboard Pro</td><td>May 12, 2024</td><td style={{ fontWeight: 500 }}>Rs. 129.00</td></tr>
+          <tr style={{ background: "#f9fafb" }}><td style={{ padding: 8 }}>#ORD-1002</td><td>Ergonomic Office Chair</td><td>May 09, 2024</td><td style={{ fontWeight: 500 }}>Rs. 499.98</td></tr>
         </tbody>
       </table>
     </div>
@@ -1858,8 +1856,8 @@ const PurchaseHistoryPage = () => (
 );
 
 const RecentPurchasesPage = () => (
-  <div style={{ flex: 1, overflowY: "auto", padding: "20px 24px", background: APP_PAGE_BACKGROUND }}>
-    <h1 style={{ fontSize: 22, fontWeight: 700, lineHeight: 1.08, letterSpacing: -0.2 }}>Recent Purchases</h1>
+    <div style={{ flex: 1, overflowY: "auto", padding: "20px 24px", background: APP_PAGE_BACKGROUND }}>
+    <h1 style={APP_PAGE_TITLE_STYLE}>Recent Purchases</h1>
     <p style={{ color: "#6b7280", fontWeight: 400 }}>Quick view of your latest orders.</p>
     <div style={{ marginTop: 12 }}>
       <ul style={{ background: "#fff", border: "1px solid #e5e7eb", borderRadius: 12, padding: 12 }}>
@@ -1903,10 +1901,10 @@ const SuppliedProductsPage = () => {
   });
 
   return (
-    <div style={{ flex: 1, overflowY: "auto", padding: "20px 24px", background: "#f9fafb" }}>
+    <div style={{ flex: 1, overflowY: "auto", padding: "20px 24px", background: APP_PAGE_BACKGROUND }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 20 }}>
         <div>
-          <h1 style={{ fontSize: 22, fontWeight: 700, lineHeight: 1.08, letterSpacing: -0.2, margin: 0 }}>Supplied Products</h1>
+          <h1 style={{ ...APP_PAGE_TITLE_STYLE, margin: 0 }}>Supplied Products</h1>
           <p style={{ color: "#6b7280", margin: "6px 0 0" }}>Live supplier inventory synced from the admin product store.</p>
         </div>
         <Badge color="blue">View only</Badge>
@@ -1925,7 +1923,7 @@ const SuppliedProductsPage = () => {
           <tbody>
             {rows.map((row, index) => (
               <tr key={row.id} style={{ background: index % 2 === 0 ? "#fff" : "#f9fafb" }}>
-                <td style={{ padding: 8, fontWeight: 600 }}>{row.product}</td>
+                <td style={{ padding: 8, fontWeight: 500 }}>{row.product}</td>
                 <td style={{ padding: 8 }}>{row.current}</td>
                 <td style={{ padding: 8 }}>{row.minimum}</td>
                 <td style={{ padding: 8 }}>{row.lastDelivery}</td>
@@ -1941,7 +1939,7 @@ const SuppliedProductsPage = () => {
 
 const RestockRequestsPage = () => (
   <div style={{ flex: 1, overflowY: "auto", padding: "20px 24px", background: APP_PAGE_BACKGROUND }}>
-    <h1 style={{ fontSize: 22, fontWeight: 700, lineHeight: 1.08, letterSpacing: -0.2 }}>Restock Requests</h1>
+    <h1 style={APP_PAGE_TITLE_STYLE}>Restock Requests</h1>
     <p style={{ color: "#6b7280" }}>View and manage restock requests.</p>
     <div style={{ marginTop: 12 }}>
       <div style={{ background: "#fff", border: "1px solid #e5e7eb", borderRadius: 12, padding: 12 }}>
@@ -1953,8 +1951,8 @@ const RestockRequestsPage = () => (
 );
 
 const SupplyHistoryPage = () => (
-  <div style={{ flex: 1, overflowY: "auto", padding: "20px 24px", background: "#f9fafb" }}>
-    <h1 style={{ fontSize: 22, fontWeight: 700, lineHeight: 1.08, letterSpacing: -0.2 }}>Supply History</h1>
+  <div style={{ flex: 1, overflowY: "auto", padding: "20px 24px", background: APP_PAGE_BACKGROUND }}>
+    <h1 style={APP_PAGE_TITLE_STYLE}>Supply History</h1>
     <p style={{ color: "#6b7280" }}>Past deliveries and restocks.</p>
     <div style={{ marginTop: 12, background: "#fff", borderRadius: 12, padding: 16, border: "1px solid #e5e7eb" }}>
       <table style={{ width: "100%", borderCollapse: "collapse" }}>
@@ -1972,14 +1970,14 @@ const SupplyHistoryPage = () => (
             <td style={{ padding: 8 }}>RS-9000</td>
             <td style={{ padding: 8 }}>Ergonomic Office Chair</td>
             <td style={{ padding: 8 }}>Apr 08, 2024</td>
-            <td style={{ padding: 8, fontWeight: 700 }}>Rs. 12,500.00</td>
+            <td style={{ padding: 8, fontWeight: 500 }}>Rs. 12,500.00</td>
             <td style={{ padding: 8 }}><Badge color="green">Completed</Badge></td>
           </tr>
           <tr style={{ background: "#f9fafb" }}>
             <td style={{ padding: 8 }}>RS-8999</td>
             <td style={{ padding: 8 }}>Smart Lighting Kit</td>
             <td style={{ padding: 8 }}>Mar 12, 2024</td>
-            <td style={{ padding: 8, fontWeight: 700 }}>Rs. 8,900.00</td>
+            <td style={{ padding: 8, fontWeight: 500 }}>Rs. 8,900.00</td>
             <td style={{ padding: 8 }}><Badge color="green">Completed</Badge></td>
           </tr>
         </tbody>
@@ -1989,8 +1987,8 @@ const SupplyHistoryPage = () => (
 );
 
 const ProfilePage = ({ role, revenueModeEnabled, onToggleRevenueMode }) => (
-  <div style={{ flex: 1, overflowY: "auto", padding: "20px 24px", background: "#f9fafb" }}>
-    <h1 style={{ fontSize: 22, fontWeight: 700, lineHeight: 1.08, letterSpacing: -0.2 }}>Profile</h1>
+  <div style={{ flex: 1, overflowY: "auto", padding: "20px 24px", background: APP_PAGE_BACKGROUND }}>
+    <h1 style={APP_PAGE_TITLE_STYLE}>Profile</h1>
     <p style={{ color: "#6b7280" }}>Basic account information for the current user.</p>
     <div style={{ marginTop: 12, background: "#fff", borderRadius: 12, padding: 16, border: "1px solid #e5e7eb", display: "grid", gap: 12 }}>
       <div>
@@ -2142,21 +2140,6 @@ export default function App() {
     );
   }
 
-  const pageTitles = {
-    dashboard: "Dashboard",
-    products: "Products",
-    suppliers: "Suppliers",
-    sales: "Sales",
-    reports: "Reports",
-    purchase_history: "Purchase History",
-    supplied_products: "Supplied Products",
-    restock_requests: "Restock Requests",
-    supply_history: "Supply History",
-    profile: "Profile",
-  };
-
-  const currentTitle = pageTitles[page] || "Inventory Pro";
-
   const handleRefresh = () => {
     window.dispatchEvent(new Event("inventory-db-changed"));
   };
@@ -2166,16 +2149,6 @@ export default function App() {
       <Sidebar active={page} setPage={setPageAuthorized} onLogout={handleLogout} role={role} />
       <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
         <TopBar
-          title={currentTitle}
-          subtitle={
-            role === "admin"
-              ? "Administrator portal"
-            : role === "customer"
-                ? "Customer portal"
-              : role === "supplier"
-                  ? "Supplier portal"
-                  : "Inventory portal"
-          }
           onRefresh={handleRefresh}
         />
         {role === "customer" ? (

@@ -8,12 +8,18 @@ import {
   APP_ACCENT_GRADIENT,
   APP_ACCENT_SHADOW,
   APP_PAGE_BACKGROUND,
+  APP_PAGE_TITLE_STYLE,
   ThemeSelect,
   Pagination,
 } from "./components/UI";
 import dashboardService from "./services/dashboardService";
 
 const ITEMS_PER_PAGE = 100;
+const SEARCH_INPUT_MAX_LENGTH = 80;
+const sanitizeSearchInput = (value) => String(value || "").split("").filter((char) => {
+  const code = char.charCodeAt(0);
+  return code >= 32 && code !== 127;
+}).join("");
 const icons = {
   grid: "M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z",
   box: "M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z",
@@ -77,7 +83,7 @@ const normalizeHistoryStatus = (status) => {
 const PageHeader = ({ title, subtitle, actions }) => (
     <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 16, marginBottom: 20, flexWrap: "wrap" }}>
       <div style={{ minWidth: 0 }}>
-      <h1 style={{ margin: 0, fontSize: 26, fontWeight: 800, lineHeight: 1.08, letterSpacing: -0.3, color: "#0f172a" }}>{title}</h1>
+      <h1 style={APP_PAGE_TITLE_STYLE}>{title}</h1>
       <p style={{ margin: "8px 0 0", color: "#64748b", fontSize: 13, fontWeight: 400, lineHeight: 1.6, maxWidth: 720 }}>{subtitle}</p>
     </div>
     {actions && (
@@ -281,7 +287,7 @@ const CustomerDashboard = ({ page = "customer", revenueModeEnabled, onToggleReve
 
   const renderProfile = () => (
     <div style={{ flex: 1, overflowY: "auto", padding: "20px 24px", background: APP_PAGE_BACKGROUND }}>
-      <h1 style={{ fontSize: 22, fontWeight: 700, lineHeight: 1.08, letterSpacing: -0.2 }}>Profile</h1>
+      <h1 style={APP_PAGE_TITLE_STYLE}>Profile</h1>
       <p style={{ color: "#6b7280" }}>Basic account information for the current user.</p>
       <div style={{ marginTop: 12, background: "#fff", borderRadius: 12, padding: 16, border: "1px solid #e5e7eb", display: "grid", gap: 12 }}>
         <div>
@@ -442,7 +448,7 @@ const CustomerDashboard = ({ page = "customer", revenueModeEnabled, onToggleReve
         ]}
       />
 
-      <div style={{ background: "#fff", borderRadius: 12, border: "1px solid #e5e7eb", padding: 20, boxShadow: "0 1px 3px rgba(0, 0, 0, 0.05)", marginBottom: 20 }}>
+      <div style={{ background: "#fff", borderRadius: 12, border: "1px solid #e5e7eb", padding: 20, boxShadow: "0 1px 3px rgba(0, 0, 0, 0.05)", marginBottom: 20, position: "relative", zIndex: 3, overflow: "visible" }}>
         <div style={{ display: "grid", gridTemplateColumns: "1.5fr repeat(3, minmax(140px, 1fr))", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
           <div style={{ position: "relative" }}>
             <span style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "#111827" }}><Icon d={icons.search} size={14} /></span>
@@ -450,8 +456,10 @@ const CustomerDashboard = ({ page = "customer", revenueModeEnabled, onToggleReve
               type="text"
               placeholder="Search products, categories, or SKUs"
               value={catalogQuery}
-              onChange={(event) => setCatalogQuery(event.target.value)}
+              onChange={(event) => setCatalogQuery(sanitizeSearchInput(event.target.value).slice(0, SEARCH_INPUT_MAX_LENGTH))}
               ref={catalogSearchRef}
+              maxLength={SEARCH_INPUT_MAX_LENGTH}
+              aria-label="Search products"
               style={{ ...APP_CONTROL_INPUT_STYLE, paddingLeft: 38 }}
             />
           </div>
@@ -508,7 +516,7 @@ const CustomerDashboard = ({ page = "customer", revenueModeEnabled, onToggleReve
                   <div style={{ display: "flex", alignItems: "end", justifyContent: "space-between", gap: 10, marginTop: 16, flexWrap: "wrap" }}>
                     <div>
                       <div style={{ fontSize: 11, color: "#9ca3af", textTransform: "uppercase", fontWeight: 600 }}>Price</div>
-                      <div style={{ fontSize: 22, fontWeight: 700, color: "#111827", marginTop: 2 }}>{item.price}</div>
+                      <div style={{ fontSize: 22, fontWeight: 500, color: "#111827", marginTop: 2 }}>{item.price}</div>
                     </div>
                     <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "flex-end" }}>
                       <button
@@ -588,7 +596,7 @@ const CustomerDashboard = ({ page = "customer", revenueModeEnabled, onToggleReve
         <StatCard icon={<Icon d={icons.box} />} label="Fulfilled orders" value="41" sub="On time" subColor="#10b981" />
       </div>
 
-      <div style={{ background: "#fff", borderRadius: 12, border: "1px solid #e5e7eb", padding: 20, boxShadow: "0 1px 3px rgba(0, 0, 0, 0.05)", marginBottom: 20 }}>
+      <div style={{ background: "#fff", borderRadius: 12, border: "1px solid #e5e7eb", padding: 20, boxShadow: "0 1px 3px rgba(0, 0, 0, 0.05)", marginBottom: 20, position: "relative", zIndex: 3, overflow: "visible" }}>
         <div style={{ display: "grid", gridTemplateColumns: "1.5fr repeat(2, minmax(150px, 1fr)) auto", gap: 12, alignItems: "center" }}>
           <div style={{ position: "relative" }}>
             <span style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "#9ca3af" }}><Icon d={icons.search} size={14} /></span>
@@ -596,8 +604,10 @@ const CustomerDashboard = ({ page = "customer", revenueModeEnabled, onToggleReve
               type="text"
               placeholder="Search order ID, product, or amount"
               value={historyQuery}
-              onChange={(event) => setHistoryQuery(event.target.value)}
+              onChange={(event) => setHistoryQuery(sanitizeSearchInput(event.target.value).slice(0, SEARCH_INPUT_MAX_LENGTH))}
               ref={historySearchRef}
+              maxLength={SEARCH_INPUT_MAX_LENGTH}
+              aria-label="Search purchase history"
               style={{ ...APP_CONTROL_INPUT_STYLE, paddingLeft: 38 }}
             />
           </div>
@@ -657,11 +667,11 @@ const CustomerDashboard = ({ page = "customer", revenueModeEnabled, onToggleReve
             <tbody>
               {visibleHistory.map((row, index) => (
                 <tr key={row.id} style={{ borderBottom: "1px solid #e5e7eb", background: index % 2 === 0 ? "#fff" : "#f9fafb" }}>
-                  <td style={{ padding: "14px 16px", color: "#2563eb", fontWeight: 600 }}>{row.id}</td>
+                  <td style={{ padding: "14px 16px", color: "#2563eb", fontWeight: 500 }}>{row.id}</td>
                   <td style={{ padding: "14px 16px", fontWeight: 500, color: "#111827" }}>{row.product}</td>
                   <td style={{ padding: "14px 16px", color: "#6b7280" }}>{row.qty}</td>
                   <td style={{ padding: "14px 16px", color: "#6b7280" }}>{row.date}</td>
-                  <td style={{ padding: "14px 16px", fontWeight: 600, color: "#111827" }}>{row.total}</td>
+                  <td style={{ padding: "14px 16px", fontWeight: 500, color: "#111827" }}>{row.total}</td>
                   <td style={{ padding: "14px 16px" }}><Badge color={row.tone}>{row.status}</Badge></td>
                 </tr>
               ))}
